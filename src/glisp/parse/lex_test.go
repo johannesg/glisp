@@ -14,4 +14,21 @@ func Test_lexer(t *testing.T) {
 
 		So(i.typ, ShouldEqual, itemEOF)
 	})
+
+	Convey("Should parse whitespace", t, func() {
+		l := lex(" ")
+
+		i := <-l.items
+
+		So(i.typ, ShouldEqual, itemEOF)
+	})
+
+	Convey("Should parse left paren", t, func() {
+		l := lex(" (")
+
+		i := <-l.items
+
+		So(i.typ, ShouldEqual, itemLeftParen)
+		So(i.val, ShouldEqual, "(")
+	})
 }
