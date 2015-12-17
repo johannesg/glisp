@@ -30,4 +30,5 @@ const (
 	itemRightParen
 	itemNumber
 	itemString
+	itemIdentifier
 )

@@ -1,6 +1,9 @@
 package parse
 
-import "unicode/utf8"
+import (
+	"fmt"
+	"unicode/utf8"
+)
 
 type stateFn func(*lexer) stateFn
 
@@ -62,4 +65,9 @@ func (l *lexer) backup() {
 
 func (l *lexer) ignore() {
 	l.start = l.pos
+}
+
+func (l *lexer) errorf(format string, args ...interface{}) stateFn {
+	l.items <- item{typ: itemError, val: fmt.Sprintf(format, args)}
+	return nil
 }
