@@ -15,7 +15,7 @@ func lexProgram(l *lexer) stateFn {
 		case unicode.IsSpace(r):
 			l.ignore()
 		case strings.ContainsRune("()[]", r):
-			l.emit(itemDelim)
+			l.emit(tokenDelim)
 		case isAlpha(r):
 			return lexIdentifier
 		case r == '-', unicode.IsNumber(r):
@@ -26,7 +26,7 @@ func lexProgram(l *lexer) stateFn {
 			return l.errorf("Unknown token: %v", r)
 		}
 	}
-	l.emit(itemEOF)
+	l.emit(tokenEOF)
 	return nil
 }
 
@@ -47,7 +47,7 @@ func lexIdentifier(l *lexer) stateFn {
 		r := l.next()
 		if !isAlphaNumeric(r) {
 			l.backup()
-			l.emit(itemIdentifier)
+			l.emit(tokenIdentifier)
 			break
 		}
 	}
@@ -67,7 +67,7 @@ func lexNumber(l *lexer) stateFn {
 
 		case !unicode.IsNumber(r):
 			l.backup()
-			l.emit(itemNumber)
+			l.emit(tokenNumber)
 			return lexProgram
 		}
 	}
@@ -85,7 +85,7 @@ Loop:
 		}
 	}
 	l.backup()
-	l.emit(itemString)
+	l.emit(tokenString)
 	l.next()
 	return lexProgram
 }

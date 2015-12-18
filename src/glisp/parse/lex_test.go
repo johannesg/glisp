@@ -10,70 +10,70 @@ func Test_lexer(t *testing.T) {
 	Convey("Should parse empty string", t, func() {
 		l := lex("")
 
-		i := <-l.items
+		i := <-l.tokens
 
-		So(i.typ, ShouldEqual, itemEOF)
+		So(i.typ, ShouldEqual, tokenEOF)
 	})
 
 	Convey("Should parse whitespace", t, func() {
 		l := lex(" \n \t ")
 
-		i := <-l.items
+		i := <-l.tokens
 
-		So(i.typ, ShouldEqual, itemEOF)
+		So(i.typ, ShouldEqual, tokenEOF)
 	})
 
 	Convey("Should parse parens", t, func() {
 		Convey("Left paren", func() {
 			l := lex("(")
-			VerifyNextToken(l, itemDelim, "(")
-			VerifyNextToken(l, itemEOF, "")
+			VerifyNextToken(l, tokenDelim, "(")
+			VerifyNextToken(l, tokenEOF, "")
 		})
 		Convey("Right paren", func() {
 			l := lex(")")
-			VerifyNextToken(l, itemDelim, ")")
-			VerifyNextToken(l, itemEOF, "")
+			VerifyNextToken(l, tokenDelim, ")")
+			VerifyNextToken(l, tokenEOF, "")
 		})
 		Convey("Both", func() {
 			l := lex(" () ( ) ")
-			VerifyNextToken(l, itemDelim, "(")
-			VerifyNextToken(l, itemDelim, ")")
-			VerifyNextToken(l, itemDelim, "(")
-			VerifyNextToken(l, itemDelim, ")")
-			VerifyNextToken(l, itemEOF, "")
+			VerifyNextToken(l, tokenDelim, "(")
+			VerifyNextToken(l, tokenDelim, ")")
+			VerifyNextToken(l, tokenDelim, "(")
+			VerifyNextToken(l, tokenDelim, ")")
+			VerifyNextToken(l, tokenEOF, "")
 		})
-		// So(i.typ, ShouldEqual, itemLeftParen)
+		// So(i.typ, ShouldEqual, tokenLeftParen)
 		// So(i.val, ShouldEqual, "(")
 	})
 
 	Convey("Identifiers", t, func() {
 		Convey("Alphanumeric", func() {
 			l := lex("_abc123")
-			VerifyNextToken(l, itemIdentifier, "_abc123")
-			VerifyNextToken(l, itemEOF, "")
+			VerifyNextToken(l, tokenIdentifier, "_abc123")
+			VerifyNextToken(l, tokenEOF, "")
 		})
 
 		Convey("Multiple identifiers", func() {
 			l := lex(" _abc123 bbb\nccc")
-			VerifyNextToken(l, itemIdentifier, "_abc123")
-			VerifyNextToken(l, itemIdentifier, "bbb")
-			VerifyNextToken(l, itemIdentifier, "ccc")
-			VerifyNextToken(l, itemEOF, "")
+			VerifyNextToken(l, tokenIdentifier, "_abc123")
+			VerifyNextToken(l, tokenIdentifier, "bbb")
+			VerifyNextToken(l, tokenIdentifier, "ccc")
+			VerifyNextToken(l, tokenEOF, "")
 		})
 	})
 
 	Convey("Numbers", t, func() {
 		l := lex("1234567890")
-		VerifyNextToken(l, itemNumber, "1234567890")
-		VerifyNextToken(l, itemEOF, "")
+		VerifyNextToken(l, tokenNumber, "1234567890")
+		VerifyNextToken(l, tokenEOF, "")
 
 		l = lex("-1234567890")
-		VerifyNextToken(l, itemNumber, "-1234567890")
-		VerifyNextToken(l, itemEOF, "")
+		VerifyNextToken(l, tokenNumber, "-1234567890")
+		VerifyNextToken(l, tokenEOF, "")
 
 		l = lex("-123456.7890")
-		VerifyNextToken(l, itemNumber, "-123456.7890")
-		VerifyNextToken(l, itemEOF, "")
+		VerifyNextToken(l, tokenNumber, "-123456.7890")
+		VerifyNextToken(l, tokenEOF, "")
 
 		l = lex("-123456.78.90")
 		VerifyError(l)
@@ -81,7 +81,7 @@ func Test_lexer(t *testing.T) {
 
 	Convey("Strings", t, func() {
 		l := lex("  \"a nice string, 11334.9 ;'[][\" ")
-		VerifyNextToken(l, itemString, "a nice string, 11334.9 ;'[][")
+		VerifyNextToken(l, tokenString, "a nice string, 11334.9 ;'[][")
 	})
 
 	Convey("Misc", t, func() {
@@ -89,30 +89,30 @@ func Test_lexer(t *testing.T) {
   (add a b))
 `)
 
-		VerifyNextToken(l, itemDelim, "(")
-		VerifyNextToken(l, itemIdentifier, "defn")
-		VerifyNextToken(l, itemIdentifier, "foo")
-		VerifyNextToken(l, itemDelim, "[")
-		VerifyNextToken(l, itemIdentifier, "a")
-		VerifyNextToken(l, itemIdentifier, "b")
-		VerifyNextToken(l, itemDelim, "]")
-		VerifyNextToken(l, itemDelim, "(")
-		VerifyNextToken(l, itemIdentifier, "add")
-		VerifyNextToken(l, itemIdentifier, "a")
-		VerifyNextToken(l, itemIdentifier, "b")
-		VerifyNextToken(l, itemDelim, ")")
-		VerifyNextToken(l, itemDelim, ")")
-		VerifyNextToken(l, itemEOF, "")
+		VerifyNextToken(l, tokenDelim, "(")
+		VerifyNextToken(l, tokenIdentifier, "defn")
+		VerifyNextToken(l, tokenIdentifier, "foo")
+		VerifyNextToken(l, tokenDelim, "[")
+		VerifyNextToken(l, tokenIdentifier, "a")
+		VerifyNextToken(l, tokenIdentifier, "b")
+		VerifyNextToken(l, tokenDelim, "]")
+		VerifyNextToken(l, tokenDelim, "(")
+		VerifyNextToken(l, tokenIdentifier, "add")
+		VerifyNextToken(l, tokenIdentifier, "a")
+		VerifyNextToken(l, tokenIdentifier, "b")
+		VerifyNextToken(l, tokenDelim, ")")
+		VerifyNextToken(l, tokenDelim, ")")
+		VerifyNextToken(l, tokenEOF, "")
 	})
 }
 
 func VerifyError(l *lexer) {
-	i := <-l.items
-	So(i.typ, ShouldEqual, itemError)
+	i := <-l.tokens
+	So(i.typ, ShouldEqual, tokenError)
 }
 
-func VerifyNextToken(l *lexer, t itemType, v string) {
-	i := <-l.items
+func VerifyNextToken(l *lexer, t tokenType, v string) {
+	i := <-l.tokens
 	So(i.typ, ShouldEqual, t)
 	So(i.val, ShouldEqual, v)
 }

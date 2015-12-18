@@ -8,19 +8,19 @@ import (
 type stateFn func(*lexer) stateFn
 
 type lexer struct {
-	input string
-	start int
-	pos   int
-	width int
-	items chan item
+	input  string
+	start  int
+	pos    int
+	width  int
+	tokens chan token
 }
 
 const eof = -1
 
 func lex(input string) (l *lexer) {
 	l = &lexer{
-		input: input,
-		items: make(chan item),
+		input:  input,
+		tokens: make(chan token),
 	}
 
 	go l.run()
@@ -33,11 +33,11 @@ func (l *lexer) run() {
 	for state != nil {
 		state = state(l)
 	}
-	close(l.items)
+	close(l.tokens)
 }
 
-func (l *lexer) emit(i itemType) {
-	l.items <- item{typ: i, val: l.input[l.start:l.pos]}
+func (l *lexer) emit(i tokenType) {
+	l.tokens <- token{typ: i, val: l.input[l.start:l.pos]}
 	l.start = l.pos
 }
 
@@ -68,6 +68,6 @@ func (l *lexer) ignore() {
 }
 
 func (l *lexer) errorf(format string, args ...interface{}) stateFn {
-	l.items <- item{typ: itemError, val: fmt.Sprintf(format, args)}
+	l.tokens <- token{typ: tokenError, val: fmt.Sprintf(format, args)}
 	return nil
 }
