@@ -26,6 +26,7 @@ func (i item) String() string {
 const (
 	itemError = iota
 	itemEOF
+	itemDelim
 	itemLeftParen
 	itemRightParen
 	itemNumber

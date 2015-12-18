@@ -1,23 +1,29 @@
 package parse
 
-import "unicode"
+import (
+	"strings"
+	"unicode"
+)
 
 func lexProgram(l *lexer) stateFn {
-	r := l.peek()
-	for r != eof {
-		r = l.next()
-
+	for {
+		r := l.next()
+		if r == eof {
+			break
+		}
 		switch {
 		case unicode.IsSpace(r):
 			l.ignore()
-		case r == '(':
-			l.emit(itemLeftParen)
-		case r == ')':
-			l.emit(itemRightParen)
+		case strings.ContainsRune("()[]", r):
+			l.emit(itemDelim)
 		case isAlpha(r):
 			return lexIdentifier
 		case r == '-', unicode.IsNumber(r):
 			return lexNumber
+		case r == '"':
+			return lexString
+		default:
+			return l.errorf("Unknown token: %v", r)
 		}
 	}
 	l.emit(itemEOF)
@@ -65,5 +71,21 @@ func lexNumber(l *lexer) stateFn {
 			return lexProgram
 		}
 	}
+}
 
+func lexString(l *lexer) stateFn {
+	l.ignore()
+Loop:
+	for {
+		switch l.next() {
+		case eof, '\n':
+			return l.errorf("unterminated quoted string")
+		case '"':
+			break Loop
+		}
+	}
+	l.backup()
+	l.emit(itemString)
+	l.next()
+	return lexProgram
 }

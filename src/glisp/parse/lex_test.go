@@ -26,20 +26,20 @@ func Test_lexer(t *testing.T) {
 	Convey("Should parse parens", t, func() {
 		Convey("Left paren", func() {
 			l := lex("(")
-			VerifyNextToken(l, itemLeftParen, "(")
+			VerifyNextToken(l, itemDelim, "(")
 			VerifyNextToken(l, itemEOF, "")
 		})
 		Convey("Right paren", func() {
 			l := lex(")")
-			VerifyNextToken(l, itemRightParen, ")")
+			VerifyNextToken(l, itemDelim, ")")
 			VerifyNextToken(l, itemEOF, "")
 		})
 		Convey("Both", func() {
 			l := lex(" () ( ) ")
-			VerifyNextToken(l, itemLeftParen, "(")
-			VerifyNextToken(l, itemRightParen, ")")
-			VerifyNextToken(l, itemLeftParen, "(")
-			VerifyNextToken(l, itemRightParen, ")")
+			VerifyNextToken(l, itemDelim, "(")
+			VerifyNextToken(l, itemDelim, ")")
+			VerifyNextToken(l, itemDelim, "(")
+			VerifyNextToken(l, itemDelim, ")")
 			VerifyNextToken(l, itemEOF, "")
 		})
 		// So(i.typ, ShouldEqual, itemLeftParen)
@@ -77,6 +77,32 @@ func Test_lexer(t *testing.T) {
 
 		l = lex("-123456.78.90")
 		VerifyError(l)
+	})
+
+	Convey("Strings", t, func() {
+		l := lex("  \"a nice string, 11334.9 ;'[][\" ")
+		VerifyNextToken(l, itemString, "a nice string, 11334.9 ;'[][")
+	})
+
+	Convey("Misc", t, func() {
+		l := lex(`(defn foo [a b] 
+  (add a b))
+`)
+
+		VerifyNextToken(l, itemDelim, "(")
+		VerifyNextToken(l, itemIdentifier, "defn")
+		VerifyNextToken(l, itemIdentifier, "foo")
+		VerifyNextToken(l, itemDelim, "[")
+		VerifyNextToken(l, itemIdentifier, "a")
+		VerifyNextToken(l, itemIdentifier, "b")
+		VerifyNextToken(l, itemDelim, "]")
+		VerifyNextToken(l, itemDelim, "(")
+		VerifyNextToken(l, itemIdentifier, "add")
+		VerifyNextToken(l, itemIdentifier, "a")
+		VerifyNextToken(l, itemIdentifier, "b")
+		VerifyNextToken(l, itemDelim, ")")
+		VerifyNextToken(l, itemDelim, ")")
+		VerifyNextToken(l, itemEOF, "")
 	})
 }
 
