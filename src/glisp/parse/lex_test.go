@@ -82,6 +82,11 @@ func Test_lexer(t *testing.T) {
 	Convey("Strings", t, func() {
 		l := lex("  \"a nice string, 11334.9 ;'[][\" ")
 		VerifyNextToken(l, tokenString, "a nice string, 11334.9 ;'[][")
+
+		l = lex("(\"A string\")")
+		VerifyNextToken(l, tokenDelim, "(")
+		VerifyNextToken(l, tokenString, "A string")
+		VerifyNextToken(l, tokenDelim, ")")
 	})
 
 	Convey("Misc", t, func() {

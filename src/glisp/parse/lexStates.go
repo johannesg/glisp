@@ -87,5 +87,6 @@ Loop:
 	l.backup()
 	l.emit(tokenString)
 	l.next()
+	l.ignore()
 	return lexProgram
 }
