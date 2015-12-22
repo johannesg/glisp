@@ -37,8 +37,14 @@ func Test_reader(t *testing.T) {
 	})
 
 	Convey("Numbers", t, func() {
-		r := New("  1234  ")
+		r := New("  3  ")
 		f := r.Read()
+
+		So(f, ShouldHaveSameTypeAs, FormNumber{})
+		So(f.(FormNumber).Val, ShouldEqual, 3)
+
+		r = New("  1234  ")
+		f = r.Read()
 
 		So(f, ShouldHaveSameTypeAs, FormNumber{})
 		So(f.(FormNumber).Val, ShouldEqual, 1234)
@@ -54,5 +60,50 @@ func Test_reader(t *testing.T) {
 
 		So(f, ShouldHaveSameTypeAs, FormNumber{})
 		So(f.(FormNumber).Val, ShouldEqual, +1234)
+	})
+
+	Convey("Lists", t, func() {
+		r := New(" ( aa 521 ) ")
+		f := r.Read()
+
+		So(f, ShouldResemble, FormList{
+			Items: []Form{
+				FormSymbol{Name: "aa"},
+				FormNumber{Val: 521},
+			},
+		})
+
+		r = New("(a (b c))")
+		f = r.Read()
+
+		So(f, ShouldResemble, FormList{
+			Items: []Form{
+				FormSymbol{Name: "a"},
+				FormList{
+					Items: []Form{
+						FormSymbol{Name: "b"}, FormSymbol{Name: "c"},
+					},
+				},
+			},
+		})
+
+		r = New(`
+( a 
+  (b 
+   c)
+)`)
+
+		f = r.Read()
+
+		So(f, ShouldResemble, FormList{
+			Items: []Form{
+				FormSymbol{Name: "a"},
+				FormList{
+					Items: []Form{
+						FormSymbol{Name: "b"}, FormSymbol{Name: "c"},
+					},
+				},
+			},
+		})
 	})
 }

@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -22,7 +23,8 @@ type FormEmpty struct {
 }
 
 type FormError struct {
-	Val string
+	Val  string
+	Desc string
 }
 
 type FormSymbol struct {
@@ -31,6 +33,10 @@ type FormSymbol struct {
 
 type FormNumber struct {
 	Val int
+}
+
+type FormList struct {
+	Items []Form
 }
 
 const eof = -1
@@ -48,12 +54,16 @@ func (reader *Reader) read(r rune) Form {
 		switch {
 		case unicode.IsSpace(r):
 			reader.ignore()
-		case strings.ContainsRune("+-", r), unicode.IsNumber(r):
+		case strings.ContainsRune("+-", r):
 			return reader.readNumberOrSymbol()
 		case strings.ContainsRune("*!_'?", r), unicode.IsLetter(r):
 			return reader.readSymbol()
+		case unicode.IsNumber(r):
+			return reader.readNumber()
+		case r == '(':
+			return reader.readList()
 		default:
-			return FormError{Val: reader.input[reader.start:reader.pos]}
+			return reader.errorf("Invalid token")
 		}
 	}
 
@@ -101,6 +111,30 @@ func (reader *Reader) readNumber() Form {
 	}
 }
 
+func (reader *Reader) readList() Form {
+	reader.ignore()
+	l := FormList{}
+	for {
+		r := reader.next()
+		switch {
+		case r == ')':
+			return l
+		case r == eof:
+			return reader.errorf("Unclosed list")
+		case unicode.IsSpace(r):
+			reader.ignore()
+		default:
+			l.Items = append(l.Items, reader.read(r))
+		}
+	}
+}
+
+func (reader *Reader) errorf(format string, args ...interface{}) FormError {
+	return FormError{
+		Val:  reader.input[reader.start:reader.pos],
+		Desc: fmt.Sprintf(format, args),
+	}
+}
 func (l *Reader) peek() (r rune) {
 	r = l.next()
 	l.backup()
