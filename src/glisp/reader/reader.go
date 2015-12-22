@@ -9,11 +9,12 @@ import (
 )
 
 type Reader struct {
-	input string
-	line  int
-	start int
-	pos   int
-	width int
+	input   string
+	line    int
+	start   int
+	pos     int
+	width   int
+	current rune
 }
 
 type Form interface {
@@ -46,33 +47,40 @@ func New(input string) *Reader {
 }
 
 func (reader *Reader) Read() Form {
-	return reader.read(reader.next())
+	reader.next()
+
+	return reader.read()
 }
 
-func (reader *Reader) read(r rune) Form {
-	for ; r != eof; r = reader.next() {
-		switch {
-		case unicode.IsSpace(r):
-			reader.ignore()
-		case strings.ContainsRune("+-", r):
-			return reader.readNumberOrSymbol()
-		case strings.ContainsRune("*!_'?", r), unicode.IsLetter(r):
-			return reader.readSymbol()
-		case unicode.IsNumber(r):
-			return reader.readNumber()
-		case r == '(':
-			return reader.readList()
-		default:
-			return reader.errorf("Invalid token")
-		}
+func (reader *Reader) read() Form {
+	for reader.current != eof && unicode.IsSpace(reader.current) {
+		reader.ignore()
+		reader.next()
 	}
+	r := reader.current
+	// log.Printf("Form: Current rune: %c", reader.current)
 
-	return FormEmpty{}
+	switch {
+	case r == eof:
+		return FormEmpty{}
+	case strings.ContainsRune("+-", r):
+		return reader.readNumberOrSymbol()
+	case strings.ContainsRune("*!_'?", r), unicode.IsLetter(r):
+		return reader.readSymbol()
+	case unicode.IsNumber(r):
+		return reader.readNumber()
+	case r == '(':
+		return reader.readList()
+	case strings.ContainsRune(")]}", r):
+		return nil
+	}
+	return reader.errorf("Invalid token")
 }
 
 func (reader *Reader) readNumberOrSymbol() Form {
 	for {
-		r := reader.next()
+		reader.next()
+		r := reader.current
 		switch {
 		case unicode.IsNumber(r):
 			return reader.readNumber()
@@ -84,24 +92,24 @@ func (reader *Reader) readNumberOrSymbol() Form {
 
 func (reader *Reader) readSymbol() Form {
 	for {
-		r := reader.next()
+		reader.next()
+		r := reader.current
 		switch {
 		case strings.ContainsRune("*!_'?+-", r), unicode.IsLetter(r), unicode.IsNumber(r):
 		default:
-			reader.backup()
-			return FormSymbol{Name: reader.input[reader.start:reader.pos]}
+			return FormSymbol{Name: reader.input[reader.start : reader.pos-reader.width]}
 		}
 	}
 }
 
 func (reader *Reader) readNumber() Form {
 	for {
-		r := reader.next()
+		reader.next()
+		r := reader.current
 		switch {
 		case unicode.IsNumber(r):
 		default:
-			reader.backup()
-			s := reader.input[reader.start:reader.pos]
+			s := reader.input[reader.start : reader.pos-reader.width]
 			i, err := strconv.ParseInt(s, 10, 32)
 			if err != nil {
 				return FormError{Val: s}
@@ -113,18 +121,21 @@ func (reader *Reader) readNumber() Form {
 
 func (reader *Reader) readList() Form {
 	reader.ignore()
+	reader.next()
+	// log.Printf("List: Current rune: %c", reader.current)
 	l := FormList{}
 	for {
-		r := reader.next()
+		i := reader.read()
+		// log.Printf("List: Current form: %T", i)
+
+		r := reader.current
 		switch {
-		case r == ')':
+		case i == nil && r == ')':
 			return l
 		case r == eof:
 			return reader.errorf("Unclosed list")
-		case unicode.IsSpace(r):
-			reader.ignore()
 		default:
-			l.Items = append(l.Items, reader.read(r))
+			l.Items = append(l.Items, i)
 		}
 	}
 }
@@ -135,26 +146,19 @@ func (reader *Reader) errorf(format string, args ...interface{}) FormError {
 		Desc: fmt.Sprintf(format, args),
 	}
 }
-func (l *Reader) peek() (r rune) {
-	r = l.next()
-	l.backup()
-	return
-}
 
-func (l *Reader) next() (r rune) {
+func (l *Reader) next() bool {
 	if l.pos >= len(l.input) {
 		l.width = 0
-		return eof
+		l.current = eof
+		return false
 	}
 
 	r, w := utf8.DecodeRuneInString(l.input[l.pos:])
 	l.width = w
 	l.pos += l.width
-	return r
-}
-
-func (l *Reader) backup() {
-	l.pos -= l.width
+	l.current = r
+	return true
 }
 
 func (l *Reader) ignore() {
