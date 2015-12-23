@@ -9,37 +9,54 @@ import (
 func Test_parse(t *testing.T) {
 	Convey("Can parse", t, func() {
 		Convey("Errors", func() {
+			_, err := NewReader(")").Read()
+			So(err, ShouldNotBeNil)
+		})
+
+		Convey("Read until end", func() {
+			f, err := NewReader("").Read()
+			So(f, ShouldBeNil)
+			So(err, ShouldBeNil)
+
+			r := NewReader("aaa")
+			r.Read()
+			f, err = r.Read()
+			So(f, ShouldBeNil)
+			So(err, ShouldBeNil)
 		})
 
 		Convey("Success", func() {
-			a := parse("aaa")
+			f, err := NewReader("aaa").Read()
 
-			So(a.nodes, ShouldHaveLength, 1)
-			So(a.nodes[0], ShouldHaveSameTypeAs, astSymbol{})
+			So(err, ShouldBeNil)
+			So(f, ShouldHaveSameTypeAs, Symbol{})
 
-			a = parse("(defn apa)")
+			f, _ = NewReader("(defn apa)").Read()
 
-			So(a.nodes, ShouldHaveLength, 1)
-			So(a.nodes[0], ShouldHaveSameTypeAs, astList{})
-			So(a.nodes[0].(astList).items, ShouldHaveLength, 2)
+			So(err, ShouldBeNil)
+			So(f, ShouldHaveSameTypeAs, List{})
+			So(f.(List).items, ShouldHaveLength, 2)
 
-			a = parse("(add 1 2)")
+			f, _ = NewReader("(add 1 2)").Read()
 
-			So(a.nodes, ShouldHaveLength, 1)
-			So(a.nodes[0], ShouldHaveSameTypeAs, astList{})
-			So(a.nodes[0].(astList).items, ShouldHaveLength, 3)
-			So(a.nodes[0].(astList).items[0], ShouldHaveSameTypeAs, astSymbol{})
-			So(a.nodes[0].(astList).items[1], ShouldHaveSameTypeAs, astLiteral{})
-			So(a.nodes[0].(astList).items[2], ShouldHaveSameTypeAs, astLiteral{})
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, List{
+				items: []Form{
+					Symbol{name: "add"},
+					Number{val: 1},
+					Number{val: 2},
+				},
+			})
 
-			a = parse("(print \"Some string\")")
+			f, _ = NewReader("(print \"Some string\")").Read()
 
-			So(a.nodes, ShouldHaveLength, 1)
-			So(a.nodes[0], ShouldHaveSameTypeAs, astList{})
-			So(a.nodes[0].(astList).items, ShouldHaveLength, 2)
-			So(a.nodes[0].(astList).items[0], ShouldHaveSameTypeAs, astSymbol{})
-			So(a.nodes[0].(astList).items[1], ShouldHaveSameTypeAs, astLiteral{})
-			So(a.nodes[0].(astList).items[1].(astLiteral).val, ShouldEqual, "Some string")
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, List{
+				items: []Form{
+					Symbol{name: "print"},
+					Literal{val: "Some string"},
+				},
+			})
 		})
 
 	})

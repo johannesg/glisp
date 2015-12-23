@@ -1,84 +1,69 @@
 package parse
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
-type astNode interface {
+type Reader interface {
+	Read() (Form, error)
 }
 
-type astError struct {
-	desc string
-}
-
-type astList struct {
-	items []astNode
-}
-
-type astSymbol struct {
-	name string
-}
-
-type astLiteral struct {
-	val string
-}
-
-type ast struct {
+type reader struct {
 	lexer *lexer
-	nodes []astNode
+	nodes []Form
 }
 
-type parseStateFn func(a *ast) parseStateFn
-
-func parse(input string) (a *ast) {
+func NewReader(input string) Reader {
 	l := lex(input)
 
-	a = &ast{lexer: l}
-
-	a.run()
-
-	return
+	return &reader{lexer: l}
 }
 
-func (a *ast) emit(n astNode) {
-	a.nodes = append(a.nodes, n)
+func (a *reader) Read() (Form, error) {
+	return a.readForm(<-a.lexer.tokens)
 }
 
-func (a *ast) run() {
-	a.nodes = append(a.nodes, a.parseForm(<-a.lexer.tokens))
-}
-
-func (a *ast) parseForm(t token) astNode {
+func (a *reader) readForm(t token) (Form, error) {
 	switch {
 	case isDelim(t, "("):
-		return a.parseList()
+		return a.readList()
 	case t.typ == tokenIdentifier:
-		return astSymbol{name: t.val}
+		return Symbol{name: t.val}, nil
 	case t.typ == tokenNumber:
-		return astLiteral{val: t.val}
+		n, err := strconv.ParseInt(t.val, 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to parse number: %v", n)
+		}
+		return Number{val: int(n)}, nil
 	case t.typ == tokenString:
-		return astLiteral{val: t.val}
+		return Literal{val: t.val}, nil
+	case t.typ == tokenEOF:
+		return nil, nil
 	default:
-		return a.errorf("Invalid token: %v", t)
+		return nil, fmt.Errorf("Invalid token: %v", t)
 	}
 }
 
-func (a *ast) parseList() astNode {
-	l := astList{}
+func (a *reader) readList() (Form, error) {
+	l := List{}
 
 	for t := range a.lexer.tokens {
 		switch {
 		case isDelim(t, ")"):
-			return l
+			return l, nil
 		default:
-			l.items = append(l.items, a.parseForm(t))
+			i, err := a.readForm(t)
+			if err != nil {
+				return nil, err
+			}
+
+			l.items = append(l.items, i)
 		}
 	}
-	return a.errorf("List not closed")
+	return nil, fmt.Errorf("List not closed")
 }
 
 func isDelim(t token, v string) bool {
 	return t.typ == tokenDelim && v == t.val
-}
-
-func (a *ast) errorf(format string, args ...interface{}) astError {
-	return astError{desc: fmt.Sprintf(format, args)}
 }
