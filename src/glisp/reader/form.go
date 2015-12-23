@@ -1,6 +1,7 @@
-package parse
+package reader
 
 type Form interface {
+	Eval() (Form, error)
 }
 
 type List struct {

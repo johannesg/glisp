@@ -1,4 +1,4 @@
-package parse
+package reader
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func Test_parse(t *testing.T) {
+func Test_reader(t *testing.T) {
 	Convey("Can parse", t, func() {
 		Convey("Errors", func() {
 			_, err := NewReader(")").Read()
