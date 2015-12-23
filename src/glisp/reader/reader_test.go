@@ -1,4 +1,4 @@
-package reader
+package parse
 
 import (
 	"testing"
@@ -6,104 +6,58 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func Test_reader(t *testing.T) {
-	Convey("Empty", t, func() {
-		r := New("")
-
-		So(r.Read(), ShouldHaveSameTypeAs, FormEmpty{})
-
-		r = New("   ")
-		So(r.Read(), ShouldHaveSameTypeAs, FormEmpty{})
-	})
-
-	Convey("Symbols", t, func() {
-		r := New("abc")
-		f := r.Read()
-
-		So(f, ShouldHaveSameTypeAs, FormSymbol{})
-		So(f.(FormSymbol).Name, ShouldEqual, "abc")
-
-		r = New("  abc  ")
-		f = r.Read()
-
-		So(f, ShouldHaveSameTypeAs, FormSymbol{})
-		So(f.(FormSymbol).Name, ShouldEqual, "abc")
-
-		r = New("  +a-b?  ")
-		f = r.Read()
-
-		So(f, ShouldHaveSameTypeAs, FormSymbol{})
-		So(f.(FormSymbol).Name, ShouldEqual, "+a-b?")
-	})
-
-	Convey("Numbers", t, func() {
-		r := New("3")
-		f := r.Read()
-
-		So(f, ShouldHaveSameTypeAs, FormNumber{})
-		So(f.(FormNumber).Val, ShouldEqual, 3)
-
-		r = New("1234")
-		f = r.Read()
-
-		So(f, ShouldHaveSameTypeAs, FormNumber{})
-		So(f.(FormNumber).Val, ShouldEqual, 1234)
-
-		r = New("-1234")
-		f = r.Read()
-
-		So(f, ShouldHaveSameTypeAs, FormNumber{})
-		So(f.(FormNumber).Val, ShouldEqual, -1234)
-
-		r = New("+1234")
-		f = r.Read()
-
-		So(f, ShouldHaveSameTypeAs, FormNumber{})
-		So(f.(FormNumber).Val, ShouldEqual, +1234)
-	})
-
-	Convey("Lists", t, func() {
-		r := New(" ( aa 521 ) ")
-		f := r.Read()
-
-		So(f, ShouldResemble, FormList{
-			Items: []Form{
-				FormSymbol{Name: "aa"},
-				FormNumber{Val: 521},
-			},
+func Test_parse(t *testing.T) {
+	Convey("Can parse", t, func() {
+		Convey("Errors", func() {
+			_, err := NewReader(")").Read()
+			So(err, ShouldNotBeNil)
 		})
 
-		r = New("(a (b c))")
-		f = r.Read()
+		Convey("Read until end", func() {
+			f, err := NewReader("").Read()
+			So(f, ShouldBeNil)
+			So(err, ShouldBeNil)
 
-		So(f, ShouldResemble, FormList{
-			Items: []Form{
-				FormSymbol{Name: "a"},
-				FormList{
-					Items: []Form{
-						FormSymbol{Name: "b"}, FormSymbol{Name: "c"},
-					},
+			r := NewReader("aaa")
+			r.Read()
+			f, err = r.Read()
+			So(f, ShouldBeNil)
+			So(err, ShouldBeNil)
+		})
+
+		Convey("Success", func() {
+			f, err := NewReader("aaa").Read()
+
+			So(err, ShouldBeNil)
+			So(f, ShouldHaveSameTypeAs, Symbol{})
+
+			f, _ = NewReader("(defn apa)").Read()
+
+			So(err, ShouldBeNil)
+			So(f, ShouldHaveSameTypeAs, List{})
+			So(f.(List).items, ShouldHaveLength, 2)
+
+			f, _ = NewReader("(add 1 2)").Read()
+
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, List{
+				items: []Form{
+					Symbol{name: "add"},
+					Number{val: 1},
+					Number{val: 2},
 				},
-			},
-		})
+			})
 
-		r = New(`
-( a 
-  (b 
-   c)
-)`)
+			f, _ = NewReader("(print \"Some string\")").Read()
 
-		f = r.Read()
-
-		So(f, ShouldResemble, FormList{
-			Items: []Form{
-				FormSymbol{Name: "a"},
-				FormList{
-					Items: []Form{
-						FormSymbol{Name: "b"}, FormSymbol{Name: "c"},
-					},
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, List{
+				items: []Form{
+					Symbol{name: "print"},
+					Literal{val: "Some string"},
 				},
-			},
+			})
 		})
+
 	})
 }
