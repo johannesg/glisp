@@ -13,7 +13,7 @@ func Test_eval(t *testing.T) {
 			res, err := f.Eval()
 
 			So(err, ShouldBeNil)
-			So(res, ShouldResemble, Number{val: 4})
+			So(res, ShouldResemble, Number{Val: 4})
 		})
 
 		Convey("Addition", func() {
@@ -21,13 +21,13 @@ func Test_eval(t *testing.T) {
 			res, err := f.Eval()
 
 			So(err, ShouldBeNil)
-			So(res, ShouldResemble, Number{val: 5})
+			So(res, ShouldResemble, Number{Val: 5})
 
 			f, _ = NewReader("(add 1 (add 9 4))").Read()
 			res, err = f.Eval()
 
 			So(err, ShouldBeNil)
-			So(res, ShouldResemble, Number{val: 14})
+			So(res, ShouldResemble, Number{Val: 14})
 		})
 	})
 }

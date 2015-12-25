@@ -1,6 +1,8 @@
 package reader
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func (n Number) Eval() (Form, error) {
 	return n, nil
@@ -15,37 +17,22 @@ func (l Literal) Eval() (Form, error) {
 }
 
 func (l *List) Eval() (Form, error) {
-	if len(l.items) == 0 {
+	if len(l.Items) == 0 {
 		return l, nil
 	}
 
-	s, ok := l.items[0].(Symbol)
+	s, ok := l.Items[0].(Symbol)
 	if !ok {
 		return nil, fmt.Errorf("Expected symbol")
 	}
 
-	switch s.name {
-	case "add":
-		return Add(l.items[1:])
-	default:
-		return nil, fmt.Errorf("Not implemented: %v", s.name)
-	}
+	return InvokeBuiltIn(s, l.Items[1:])
 }
 
-func Add(items []Form) (Form, error) {
-	result := 0
-	for _, i := range items {
-		f, err := i.Eval()
-		if err != nil {
-			return nil, err
-		}
+func (q *QForm) Eval() (Form, error) {
+	return q, nil
+}
 
-		n, ok := f.(Number)
-		if !ok {
-			return nil, fmt.Errorf("Expected number")
-		}
-
-		result += n.val
-	}
-	return Number{val: result}, nil
+func (b Boolean) Eval() (Form, error) {
+	return b, nil
 }

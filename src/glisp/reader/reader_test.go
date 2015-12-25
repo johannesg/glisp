@@ -29,38 +29,57 @@ func Test_reader(t *testing.T) {
 			f, err := NewReader("aaa").Read()
 
 			So(err, ShouldBeNil)
-			So(f, ShouldResemble, Symbol{name: "aaa"})
+			So(f, ShouldResemble, Symbol{Name: "aaa"})
 
-			f, _ = NewReader("(defn apa)").Read()
-
-			So(err, ShouldBeNil)
-			So(f, ShouldResemble, &List{
-				items: []Form{
-					Symbol{name: "defn"},
-					Symbol{name: "apa"},
-				},
-			})
-
-			f, _ = NewReader("(add 1 2)").Read()
+			f, err = NewReader("(defn apa)").Read()
 
 			So(err, ShouldBeNil)
 			So(f, ShouldResemble, &List{
-				items: []Form{
-					Symbol{name: "add"},
-					Number{val: 1},
-					Number{val: 2},
+				Items: []Form{
+					Symbol{Name: "defn"},
+					Symbol{Name: "apa"},
 				},
 			})
 
-			f, _ = NewReader("(print \"Some string\")").Read()
+			f, err = NewReader("(add 1 2)").Read()
 
 			So(err, ShouldBeNil)
 			So(f, ShouldResemble, &List{
-				items: []Form{
-					Symbol{name: "print"},
-					Literal{val: "Some string"},
+				Items: []Form{
+					Symbol{Name: "add"},
+					Number{Val: 1},
+					Number{Val: 2},
 				},
 			})
+
+			f, err = NewReader("(print \"Some string\")").Read()
+
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, &List{
+				Items: []Form{
+					Symbol{Name: "print"},
+					Literal{Val: "Some string"},
+				},
+			})
+
+			f, err = NewReader("' (add 1 3)").Read()
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, &QForm{
+				Form: &List{
+					Items: []Form{
+						Symbol{Name: "add"},
+						Number{Val: 1},
+						Number{Val: 3},
+					},
+				}})
+
+			f, err = NewReader("true").Read()
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, Boolean(true))
+
+			f, err = NewReader("false").Read()
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, Boolean(false))
 		})
 
 	})

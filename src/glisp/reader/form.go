@@ -7,41 +7,51 @@ type Form interface {
 }
 
 type List struct {
-	items []Form
+	Items []Form
 }
 
 type Symbol struct {
-	name string
+	Name string
 }
 
 type Literal struct {
-	val string
+	Val string
 }
 
 type Number struct {
-	val int
+	Val int
 }
 
+type QForm struct {
+	Form Form
+}
+
+type Boolean bool
+
 func (n Number) String() string {
-	return fmt.Sprint(n.val)
+	return fmt.Sprint(n.Val)
 }
 
 func (s Symbol) String() string {
-	return fmt.Sprint(s.name)
+	return fmt.Sprint(s.Name)
 }
 
 func (l Literal) String() string {
-	return fmt.Sprint(l.val)
+	return "\"" + l.Val + "\""
 }
 
 func (l *List) String() string {
 	var s string
 	s += "("
-	for _, i := range l.items {
+	for _, i := range l.Items {
 		s += fmt.Sprint(i)
 		s += " "
 	}
 
-	s = ")"
+	s += ")"
 	return s
+}
+
+func (q *QForm) String() string {
+	return fmt.Sprintf("'%v", q.Form)
 }
