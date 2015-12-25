@@ -30,4 +30,6 @@ const (
 	tokenNumber
 	tokenString
 	tokenIdentifier
+	tokenQuote
+	tokenComment
 )

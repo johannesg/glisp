@@ -22,6 +22,11 @@ func lexProgram(l *lexer) stateFn {
 			return lexNumber
 		case r == '"':
 			return lexString
+		case r == '\'':
+			l.emit(tokenQuote)
+			return lexProgram
+		case r == ';':
+			return lexComment
 		default:
 			return l.errorf("Unknown token: %v", r)
 		}
@@ -89,4 +94,16 @@ Loop:
 	l.next()
 	l.ignore()
 	return lexProgram
+}
+
+func lexComment(l *lexer) stateFn {
+	l.ignore()
+	for {
+		switch l.next() {
+		case eof, '\n':
+			l.backup()
+			l.emit(tokenComment)
+			return lexProgram
+		}
+	}
 }

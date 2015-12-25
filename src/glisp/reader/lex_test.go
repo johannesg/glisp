@@ -109,6 +109,31 @@ func Test_lexer(t *testing.T) {
 		VerifyNextToken(l, tokenDelim, ")")
 		VerifyNextToken(l, tokenEOF, "")
 	})
+
+	Convey("Quote", t, func() {
+		l := lex("(defn 'add (a b))")
+
+		VerifyNextToken(l, tokenDelim, "(")
+		VerifyNextToken(l, tokenIdentifier, "defn")
+		VerifyNextToken(l, tokenQuote, "'")
+		VerifyNextToken(l, tokenIdentifier, "add")
+		VerifyNextToken(l, tokenDelim, "(")
+		VerifyNextToken(l, tokenIdentifier, "a")
+		VerifyNextToken(l, tokenIdentifier, "b")
+		VerifyNextToken(l, tokenDelim, ")")
+	})
+
+	Convey("Comments", t, func() {
+		l := lex(`2 ; the number 2
+; a comment of no interest
+5; the number 5`)
+
+		VerifyNextToken(l, tokenNumber, "2")
+		VerifyNextToken(l, tokenComment, " the number 2")
+		VerifyNextToken(l, tokenComment, " a comment of no interest")
+		VerifyNextToken(l, tokenNumber, "5")
+		VerifyNextToken(l, tokenComment, " the number 5")
+	})
 }
 
 func VerifyError(l *lexer) {
