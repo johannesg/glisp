@@ -14,7 +14,7 @@ func (l Literal) Eval() (Form, error) {
 	return l, nil
 }
 
-func (l List) Eval() (Form, error) {
+func (l *List) Eval() (Form, error) {
 	if len(l.items) == 0 {
 		return l, nil
 	}

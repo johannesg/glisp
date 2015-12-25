@@ -46,7 +46,7 @@ func (a *reader) readForm(t token) (Form, error) {
 }
 
 func (a *reader) readList() (Form, error) {
-	l := List{}
+	l := &List{}
 
 	for t := range a.lexer.tokens {
 		switch {

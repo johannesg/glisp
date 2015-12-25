@@ -29,18 +29,22 @@ func Test_reader(t *testing.T) {
 			f, err := NewReader("aaa").Read()
 
 			So(err, ShouldBeNil)
-			So(f, ShouldHaveSameTypeAs, Symbol{})
+			So(f, ShouldResemble, Symbol{name: "aaa"})
 
 			f, _ = NewReader("(defn apa)").Read()
 
 			So(err, ShouldBeNil)
-			So(f, ShouldHaveSameTypeAs, List{})
-			So(f.(List).items, ShouldHaveLength, 2)
+			So(f, ShouldResemble, &List{
+				items: []Form{
+					Symbol{name: "defn"},
+					Symbol{name: "apa"},
+				},
+			})
 
 			f, _ = NewReader("(add 1 2)").Read()
 
 			So(err, ShouldBeNil)
-			So(f, ShouldResemble, List{
+			So(f, ShouldResemble, &List{
 				items: []Form{
 					Symbol{name: "add"},
 					Number{val: 1},
@@ -51,7 +55,7 @@ func Test_reader(t *testing.T) {
 			f, _ = NewReader("(print \"Some string\")").Read()
 
 			So(err, ShouldBeNil)
-			So(f, ShouldResemble, List{
+			So(f, ShouldResemble, &List{
 				items: []Form{
 					Symbol{name: "print"},
 					Literal{val: "Some string"},
