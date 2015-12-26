@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"glisp/reader"
 
 	"gopkg.in/readline.v1"
 )
@@ -18,7 +17,7 @@ func main() {
 		if err != nil {
 			break
 		}
-		r := reader.NewReader(line)
+		r := NewReader(line)
 		for {
 			f, err := r.Read()
 			if f == nil {
