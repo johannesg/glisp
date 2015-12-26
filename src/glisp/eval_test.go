@@ -8,9 +8,10 @@ import (
 
 func Test_eval(t *testing.T) {
 	Convey("Evaluation", t, func() {
+		e := NewEnvironment()
 		Convey("Basic", func() {
 			f, _ := NewReader("4").Read()
-			res, err := f.Eval()
+			res, err := f.Eval(e)
 
 			So(err, ShouldBeNil)
 			So(res, ShouldResemble, Number{Val: 4})
@@ -18,13 +19,13 @@ func Test_eval(t *testing.T) {
 
 		Convey("Addition", func() {
 			f, _ := NewReader("(add 1 4)").Read()
-			res, err := f.Eval()
+			res, err := f.Eval(e)
 
 			So(err, ShouldBeNil)
 			So(res, ShouldResemble, Number{Val: 5})
 
 			f, _ = NewReader("(add 1 (add 9 4))").Read()
-			res, err = f.Eval()
+			res, err = f.Eval(e)
 
 			So(err, ShouldBeNil)
 			So(res, ShouldResemble, Number{Val: 14})

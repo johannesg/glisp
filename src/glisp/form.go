@@ -3,7 +3,7 @@ package main
 import "fmt"
 
 type Form interface {
-	Eval() (Form, error)
+	Eval(Environment) (Form, error)
 }
 
 type List struct {

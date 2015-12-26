@@ -59,11 +59,12 @@ func Test_Koan(t *testing.T) {
 
 func assertTrue(desc string, lisp string) {
 	Convey(desc, func() {
+		e := NewEnvironment()
 		f, err := NewReader(lisp).Read()
 
 		So(err, ShouldBeNil)
 
-		r, err := f.Eval()
+		r, err := f.Eval(e)
 
 		So(err, ShouldBeNil)
 		So(r, ShouldResemble, Boolean(true))

@@ -12,30 +12,20 @@ func main() {
 		panic(err)
 	}
 	defer rl.Close()
+
+	env := NewEnvironment()
+
 	for {
 		line, err := rl.Readline()
 		if err != nil {
 			break
 		}
-		r := NewReader(line)
-		for {
-			f, err := r.Read()
-			if f == nil {
-				break
-			}
+		ret, err := env.Eval(line)
 
-			if err != nil {
-				println(fmt.Sprintf("%v", err))
-			}
-
-			r, err := f.Eval()
-
-			if err != nil {
-				println(fmt.Sprintf("%v", err))
-			} else {
-				println(fmt.Sprintf("%v", r))
-			}
-
+		if err != nil {
+			println(fmt.Sprintf("%v", err))
+		} else {
+			println(fmt.Sprintf("%v", ret))
 		}
 	}
 }
