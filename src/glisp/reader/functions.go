@@ -7,7 +7,9 @@ import (
 type LispFunction func([]Form) (Form, error)
 
 var builtIns = map[string]LispFunction{
-	"add":  BuiltInAdd,
+	"+":   BuiltInAdd,
+	"add": BuiltInAdd,
+	// "=":    BuiltInEquality,
 	"eval": BuiltInEval,
 }
 
@@ -19,7 +21,7 @@ func InvokeBuiltIn(symbol Form, args []Form) (Form, error) {
 
 	f, ok := builtIns[s.Name]
 	if !ok {
-		return nil, fmt.Errorf("Function not found")
+		return nil, fmt.Errorf("Function '%v' not found", s.Name)
 	}
 
 	return f(args)
@@ -51,3 +53,13 @@ func BuiltInEval(args []Form) (Form, error) {
 
 	return q.Form.Eval()
 }
+
+// func BuiltInEquality(args []Form) (Form, error) {
+// 	if len(args) == 0 {
+// 		return nil, fmt.Errorf("Wrong number of arguments")
+// 	}
+
+// 	for a := range args {
+
+// 	}
+// }

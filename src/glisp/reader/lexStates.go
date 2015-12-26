@@ -16,7 +16,7 @@ func lexProgram(l *lexer) stateFn {
 			l.ignore()
 		case strings.ContainsRune("()[]", r):
 			l.emit(tokenDelim)
-		case isAlpha(r):
+		case strings.ContainsRune("=+", r), isAlpha(r):
 			return lexIdentifier
 		case r == '-', unicode.IsNumber(r):
 			return lexNumber
@@ -28,7 +28,7 @@ func lexProgram(l *lexer) stateFn {
 		case r == ';':
 			return lexComment
 		default:
-			return l.errorf("Unknown token: %v", r)
+			return l.errorf("Unknown token: %s", l.input[l.start:l.pos])
 		}
 	}
 	l.emit(tokenEOF)
