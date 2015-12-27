@@ -25,24 +25,23 @@ func (l *List) Eval(e Environment) (Form, error) {
 		return l, nil
 	}
 
-	s, ok := l.Items[0].(Symbol)
-	if !ok {
-		return nil, fmt.Errorf("Expected symbol")
-	}
+	items := make([]Form, len(l.Items))
 
-	var args []Form
-	for _, i := range l.Items[1:] {
+	for idx, i := range l.Items {
 		ret, err := i.Eval(e)
 		if err != nil {
 			return nil, err
 		}
 
-		// log.Printf("List item: %v", ret)
-
-		args = append(args, ret)
+		items[idx] = ret
 	}
 
-	return e.Invoke(s, args)
+	f, ok := items[0].(Function)
+	if !ok {
+		return nil, fmt.Errorf("First argument must evaluate to a function")
+	}
+
+	return f.Invoke(e, items[1:])
 }
 
 func (v *Vector) Eval(e Environment) (Form, error) {
@@ -50,6 +49,7 @@ func (v *Vector) Eval(e Environment) (Form, error) {
 		return v, nil
 	}
 
+	items := make([]Form, len(v.Items))
 	for idx, i := range v.Items {
 
 		ret, err := i.Eval(e)
@@ -57,16 +57,24 @@ func (v *Vector) Eval(e Environment) (Form, error) {
 			return nil, err
 		}
 
-		v.Items[idx] = ret
+		items[idx] = ret
 	}
 
-	return v, nil
+	return &Vector{Items: items}, nil
 }
 
 func (q *QForm) Eval(e Environment) (Form, error) {
-	return q, nil
+	return q.Form, nil
 }
 
 func (b Boolean) Eval(e Environment) (Form, error) {
 	return b, nil
+}
+
+func (f BuiltInFunction) Eval(e Environment) (Form, error) {
+	return f, nil
+}
+
+func (f UserFunction) Eval(e Environment) (Form, error) {
+	return f, nil
 }

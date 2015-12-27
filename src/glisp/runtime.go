@@ -2,19 +2,22 @@ package main
 
 type Environment interface {
 	Eval(string) (Form, error)
-	Invoke(Symbol, []Form) (Form, error)
 	SetVar(string, Form)
 	Var(string) (Form, bool)
+	Vars() SymbolTable
 }
 
 type SymbolTable map[string]Form
 
 type environment struct {
-	vars SymbolTable
+	parent Environment
+	vars   SymbolTable
 }
 
-func NewEnvironment() Environment {
-	return &environment{vars: make(SymbolTable)}
+func NewEnvironment(parent Environment) Environment {
+	return &environment{
+		parent: parent,
+		vars:   make(SymbolTable)}
 }
 
 func (e *environment) Eval(input string) (ret Form, err error) {
@@ -38,7 +41,19 @@ func (e *environment) SetVar(name string, f Form) {
 	e.vars[name] = f
 }
 
-func (e *environment) Var(name string) (Form, bool) {
-	v, ok := e.vars[name]
-	return v, ok
+func (e *environment) Var(name string) (v Form, ok bool) {
+	if v, ok = e.vars[name]; ok {
+		return
+	}
+
+	if e.parent != nil {
+		return e.parent.Var(name)
+	}
+
+	v, ok = builtIns[name]
+	return
+}
+
+func (e *environment) Vars() SymbolTable {
+	return e.vars
 }

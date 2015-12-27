@@ -13,7 +13,7 @@ func main() {
 	}
 	defer rl.Close()
 
-	env := NewEnvironment()
+	env := NewEnvironment(nil)
 
 	for {
 		line, err := rl.Readline()

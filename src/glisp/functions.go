@@ -2,30 +2,37 @@ package main
 
 import (
 	"fmt"
+	"log"
 )
 
 type LispFunction func(Environment, []Form) (Form, error)
 
-var builtIns = map[string]LispFunction{
-	"+":   BuiltInAdd,
-	"add": BuiltInAdd,
-	// "=":    BuiltInEquality,
-	"eval": BuiltInEval,
-	"def":  BuiltInDef,
+var builtIns = map[string]BuiltInFunction{
+	"+":   BuiltInFunction{Fn: BuiltInAdd},
+	"add": BuiltInFunction{Fn: BuiltInAdd},
+	// "=":    BuiltInFunction{Fn: BuiltInEquality,
+	"eval": BuiltInFunction{Fn: BuiltInEval},
+	"def":  BuiltInFunction{Fn: BuiltInDef},
+	"fn":   BuiltInFunction{Fn: BuiltInFn},
+	"vars": BuiltInFunction{Fn: BuiltInVars},
 }
 
-func (e *environment) Invoke(s Symbol, args []Form) (Form, error) {
-	f, ok := builtIns[s.Name]
-	if ok {
-		return f(e, args)
+func (f BuiltInFunction) Invoke(e Environment, args []Form) (Form, error) {
+	return f.Fn(e, args)
+}
+
+func (f UserFunction) Invoke(e Environment, args []Form) (Form, error) {
+	if len(args) > len(f.Args) {
+		return nil, fmt.Errorf("Too many arguments")
 	}
 
-	v, ok := e.vars[s.Name]
-	if !ok {
-		return nil, fmt.Errorf("Var '%v' not found", s.Name)
+	local := NewEnvironment(e)
+
+	for idx, a := range args {
+		local.SetVar(f.Args[idx].Name, a)
 	}
 
-	return v.Eval(e)
+	return f.Body.Eval(local)
 }
 
 func BuiltInAdd(e Environment, args []Form) (Form, error) {
@@ -72,6 +79,49 @@ func BuiltInDef(e Environment, args []Form) (Form, error) {
 
 	e.SetVar(s.Name, r)
 	return s, nil
+}
+
+func BuiltInFn(e Environment, args []Form) (Form, error) {
+	if len(args) != 2 {
+		return nil, fmt.Errorf("fn: Wrong number of arguments")
+	}
+
+	var fargs *Vector
+	var fbody *List
+	var ok bool
+
+	if fargs, ok = args[0].(*Vector); !ok {
+		return nil, fmt.Errorf("fn: first argument must be a vector")
+	}
+
+	if fbody, ok = args[1].(*List); !ok {
+		return nil, fmt.Errorf("fn: second argument must be a list")
+	}
+
+	symbols := make([]Symbol, len(fargs.Items))
+	for idx, fa := range fargs.Items {
+		if s, ok := fa.(Symbol); ok {
+			symbols[idx] = s
+		} else {
+			return nil, fmt.Errorf("fn: all arguments must evaluate to symbols")
+		}
+	}
+
+	f := UserFunction{
+		Args: symbols,
+		Body: fbody,
+	}
+	return f, nil
+}
+
+func BuiltInVars(e Environment, args []Form) (Form, error) {
+	// items := []Form{}
+
+	for k, v := range e.Vars() {
+		log.Printf("%v: %#v", k, v)
+	}
+
+	return nil, nil
 }
 
 // func BuiltInEquality(args []Form) (Form, error) {

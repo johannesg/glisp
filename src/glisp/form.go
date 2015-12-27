@@ -33,6 +33,19 @@ type QForm struct {
 	Form Form
 }
 
+type Function interface {
+	Invoke(Environment, []Form) (Form, error)
+}
+
+type BuiltInFunction struct {
+	Fn LispFunction
+}
+
+type UserFunction struct {
+	Args []Symbol
+	Body *List
+}
+
 type Boolean bool
 
 func (n Number) String() string {

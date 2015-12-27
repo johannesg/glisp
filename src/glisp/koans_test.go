@@ -59,7 +59,7 @@ func Test_Koan(t *testing.T) {
 
 func assertTrue(desc string, lisp string) {
 	Convey(desc, func() {
-		e := NewEnvironment()
+		e := NewEnvironment(nil)
 		f, err := NewReader(lisp).Read()
 
 		So(err, ShouldBeNil)
