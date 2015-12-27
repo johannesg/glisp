@@ -45,6 +45,24 @@ func (l *List) Eval(e Environment) (Form, error) {
 	return e.Invoke(s, args)
 }
 
+func (v *Vector) Eval(e Environment) (Form, error) {
+	if len(v.Items) == 0 {
+		return v, nil
+	}
+
+	for idx, i := range v.Items {
+
+		ret, err := i.Eval(e)
+		if err != nil {
+			return nil, err
+		}
+
+		v.Items[idx] = ret
+	}
+
+	return v, nil
+}
+
 func (q *QForm) Eval(e Environment) (Form, error) {
 	return q, nil
 }

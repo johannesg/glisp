@@ -1,12 +1,19 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Form interface {
 	Eval(Environment) (Form, error)
 }
 
 type List struct {
+	Items []Form
+}
+
+type Vector struct {
 	Items []Form
 }
 
@@ -41,15 +48,23 @@ func (l Literal) String() string {
 }
 
 func (l *List) String() string {
-	var s string
-	s += "("
+	var s []string
+
 	for _, i := range l.Items {
-		s += fmt.Sprint(i)
-		s += " "
+		s = append(s, fmt.Sprint(i))
 	}
 
-	s += ")"
-	return s
+	return "(" + strings.Join(s, " ") + ")"
+}
+
+func (l *Vector) String() string {
+	var s []string
+
+	for _, i := range l.Items {
+		s = append(s, fmt.Sprint(i))
+	}
+
+	return "[" + strings.Join(s, " ") + "]"
 }
 
 func (q *QForm) String() string {

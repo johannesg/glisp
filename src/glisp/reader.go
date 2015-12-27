@@ -28,6 +28,8 @@ func (a *reader) readForm(t token) (Form, error) {
 	switch {
 	case isDelim(t, "("):
 		return a.readList()
+	case isDelim(t, "["):
+		return a.readVector()
 	case t.typ == tokenIdentifier:
 		return a.readIdentifier(t)
 	case t.typ == tokenNumber:
@@ -75,6 +77,25 @@ func (a *reader) readList() (Form, error) {
 		}
 	}
 	return nil, fmt.Errorf("List not closed")
+}
+
+func (a *reader) readVector() (Form, error) {
+	l := &Vector{}
+
+	for t := range a.lexer.tokens {
+		switch {
+		case isDelim(t, "]"):
+			return l, nil
+		default:
+			i, err := a.readForm(t)
+			if err != nil {
+				return nil, err
+			}
+
+			l.Items = append(l.Items, i)
+		}
+	}
+	return nil, fmt.Errorf("Vector not closed")
 }
 
 func (r *reader) readQForm() (Form, error) {

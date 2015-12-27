@@ -80,7 +80,15 @@ func Test_reader(t *testing.T) {
 			f, err = NewReader("false").Read()
 			So(err, ShouldBeNil)
 			So(f, ShouldResemble, Boolean(false))
-		})
 
+			f, err = NewReader("[a b]").Read()
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, &Vector{
+				Items: []Form{
+					Symbol{Name: "a"},
+					Symbol{Name: "b"},
+				},
+			})
+		})
 	})
 }
