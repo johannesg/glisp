@@ -25,23 +25,18 @@ func (l *List) Eval(e Environment) (Form, error) {
 		return l, nil
 	}
 
-	items := make([]Form, len(l.Items))
-
-	for idx, i := range l.Items {
-		ret, err := i.Eval(e)
-		if err != nil {
-			return nil, err
-		}
-
-		items[idx] = ret
+	var fname Form
+	var err error
+	if fname, err = l.Items[0].Eval(e); err != nil {
+		return nil, err
 	}
 
-	f, ok := items[0].(Function)
+	f, ok := fname.(Function)
 	if !ok {
 		return nil, fmt.Errorf("First argument must evaluate to a function")
 	}
 
-	return f.Invoke(e, items[1:])
+	return f.Invoke(e, l.Items[1:])
 }
 
 func (v *Vector) Eval(e Environment) (Form, error) {

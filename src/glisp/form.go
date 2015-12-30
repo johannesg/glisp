@@ -38,7 +38,8 @@ type Function interface {
 }
 
 type BuiltInFunction struct {
-	Fn LispFunction
+	Fn       LispFunction
+	EvalArgs bool
 }
 
 type UserFunction struct {

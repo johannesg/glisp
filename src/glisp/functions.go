@@ -8,16 +8,29 @@ import (
 type LispFunction func(Environment, []Form) (Form, error)
 
 var builtIns = map[string]BuiltInFunction{
-	"+":   BuiltInFunction{Fn: BuiltInAdd},
-	"add": BuiltInFunction{Fn: BuiltInAdd},
+	"+":   BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
+	"add": BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
 	// "=":    BuiltInFunction{Fn: BuiltInEquality,
-	"eval": BuiltInFunction{Fn: BuiltInEval},
-	"def":  BuiltInFunction{Fn: BuiltInDef},
-	"fn":   BuiltInFunction{Fn: BuiltInFn},
-	"vars": BuiltInFunction{Fn: BuiltInVars},
+	"do":       BuiltInFunction{Fn: BuiltInDo, EvalArgs: true},
+	"def":      BuiltInFunction{Fn: BuiltInDef, EvalArgs: true},
+	"defn":     BuiltInFunction{Fn: BuiltInDefn},
+	"defmacro": BuiltInFunction{Fn: BuiltInDefmacro},
+	"fn":       BuiltInFunction{Fn: BuiltInFn},
+	"vars":     BuiltInFunction{Fn: BuiltInVars},
 }
 
 func (f BuiltInFunction) Invoke(e Environment, args []Form) (Form, error) {
+	if f.EvalArgs {
+		eargs := make([]Form, len(args))
+		for idx, a := range args {
+			if ea, err := a.Eval(e); err == nil {
+				eargs[idx] = ea
+			} else {
+				return nil, err
+			}
+		}
+		return f.Fn(e, eargs)
+	}
 	return f.Fn(e, args)
 }
 
@@ -29,7 +42,11 @@ func (f UserFunction) Invoke(e Environment, args []Form) (Form, error) {
 	local := NewEnvironment(e)
 
 	for idx, a := range args {
-		local.SetVar(f.Args[idx].Name, a)
+		if da, err := a.Eval(e); err == nil {
+			local.SetVar(f.Args[idx].Name, da)
+		} else {
+			return nil, err
+		}
 	}
 
 	return f.Body.Eval(local)
@@ -49,13 +66,14 @@ func BuiltInAdd(e Environment, args []Form) (Form, error) {
 	return Number{Val: result}, nil
 }
 
-func BuiltInEval(e Environment, args []Form) (Form, error) {
-	q, ok := args[0].(*QForm)
-	if !ok {
-		return args[0].Eval(e)
+func BuiltInDo(e Environment, args []Form) (ret Form, err error) {
+	for _, a := range args {
+		ret, err = a.Eval(e)
+		if ret != nil {
+			return
+		}
 	}
-
-	return q.Form.Eval(e)
+	return
 }
 
 func BuiltInDef(e Environment, args []Form) (Form, error) {
@@ -79,6 +97,39 @@ func BuiltInDef(e Environment, args []Form) (Form, error) {
 
 	e.SetVar(s.Name, r)
 	return s, nil
+}
+
+func BuiltInDefn(e Environment, args []Form) (Form, error) {
+	if len(args) < 1 {
+		return nil, fmt.Errorf("defn: Wrong number of arguments")
+	}
+
+	s, ok := args[0].(Symbol)
+	if !ok {
+		return nil, fmt.Errorf("defn: First argument must be a symbol")
+	}
+
+	var fargs *Vector
+	var fbody *List
+
+	if fargs, ok = args[1].(*Vector); !ok {
+		return nil, fmt.Errorf("defn: first argument must be a vector")
+	}
+
+	if fbody, ok = args[2].(*List); !ok {
+		return nil, fmt.Errorf("defn: second argument must be a list")
+	}
+
+	if fn, err := BuiltInFn(e, []Form{fargs, fbody}); err != nil {
+		return nil, err
+	} else {
+		e.SetVar(s.Name, fn)
+		return fn, nil
+	}
+}
+
+func BuiltInDefmacro(e Environment, args []Form) (Form, error) {
+	return nil, nil
 }
 
 func BuiltInFn(e Environment, args []Form) (Form, error) {
