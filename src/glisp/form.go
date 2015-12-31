@@ -47,6 +47,11 @@ type UserFunction struct {
 	Body *List
 }
 
+type Macro struct {
+	Args []Symbol
+	Body *List
+}
+
 type Boolean bool
 
 func (n Number) String() string {

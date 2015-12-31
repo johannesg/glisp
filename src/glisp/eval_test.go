@@ -93,5 +93,35 @@ func Test_eval(t *testing.T) {
 				})
 			})
 		})
+
+		Convey("Macros", func() {
+			Convey("Can define", func() {
+				res, err := e.Eval("(defmacro add2 [x y] (+ x y))")
+
+				So(err, ShouldBeNil)
+
+				res, err = e.Eval("(add2 3 5)")
+
+				So(err, ShouldBeNil)
+				So(res, ShouldResemble, Number{Val: 8})
+			})
+
+			Convey("Can expand", func() {
+				res, err := e.Eval("(defmacro add2 [x y] (+ x y))")
+
+				So(err, ShouldBeNil)
+
+				res, err = e.Eval("(macroexpand add2 2 4)")
+
+				So(err, ShouldBeNil)
+				So(res, ShouldResemble, &List{
+					Items: []Form{
+						Symbol{Name: "+"},
+						Number{Val: 2},
+						Number{Val: 4},
+					},
+				})
+			})
+		})
 	})
 }

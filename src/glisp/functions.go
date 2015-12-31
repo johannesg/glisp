@@ -11,12 +11,13 @@ var builtIns = map[string]BuiltInFunction{
 	"+":   BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
 	"add": BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
 	// "=":    BuiltInFunction{Fn: BuiltInEquality,
-	"do":       BuiltInFunction{Fn: BuiltInDo, EvalArgs: true},
-	"def":      BuiltInFunction{Fn: BuiltInDef, EvalArgs: true},
-	"defn":     BuiltInFunction{Fn: BuiltInDefn},
-	"defmacro": BuiltInFunction{Fn: BuiltInDefmacro},
-	"fn":       BuiltInFunction{Fn: BuiltInFn},
-	"vars":     BuiltInFunction{Fn: BuiltInVars},
+	"do":          BuiltInFunction{Fn: BuiltInDo, EvalArgs: true},
+	"def":         BuiltInFunction{Fn: BuiltInDef, EvalArgs: true},
+	"defn":        BuiltInFunction{Fn: BuiltInDefn},
+	"defmacro":    BuiltInFunction{Fn: BuiltInDefmacro},
+	"fn":          BuiltInFunction{Fn: BuiltInFn},
+	"vars":        BuiltInFunction{Fn: BuiltInVars},
+	"macroexpand": BuiltInFunction{Fn: BuiltInMacroExpand},
 }
 
 func (f BuiltInFunction) Invoke(e Environment, args []Form) (Form, error) {
@@ -50,6 +51,19 @@ func (f UserFunction) Invoke(e Environment, args []Form) (Form, error) {
 	}
 
 	return f.Body.Eval(local)
+}
+
+func (m Macro) Invoke(e Environment, args []Form) (Form, error) {
+	if len(args) > len(m.Args) {
+		return nil, fmt.Errorf("Too many arguments")
+	}
+
+	x, err := m.Expand(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return x.Eval(e)
 }
 
 func BuiltInAdd(e Environment, args []Form) (Form, error) {
@@ -100,7 +114,7 @@ func BuiltInDef(e Environment, args []Form) (Form, error) {
 }
 
 func BuiltInDefn(e Environment, args []Form) (Form, error) {
-	if len(args) < 1 {
+	if len(args) < 3 {
 		return nil, fmt.Errorf("defn: Wrong number of arguments")
 	}
 
@@ -118,7 +132,46 @@ func BuiltInDefn(e Environment, args []Form) (Form, error) {
 }
 
 func BuiltInDefmacro(e Environment, args []Form) (Form, error) {
-	return nil, nil
+	if len(args) < 3 {
+		return nil, fmt.Errorf("defmacro: Wrong number of arguments")
+	}
+
+	s, ok := args[0].(Symbol)
+	if !ok {
+		return nil, fmt.Errorf("defmacro: First argument must be a symbol")
+	}
+
+	fn, err := BuiltInFn(e, args[1:])
+
+	if err != nil {
+		return nil, err
+	}
+
+	m := Macro{
+		Args: fn.(UserFunction).Args,
+		Body: fn.(UserFunction).Body,
+	}
+	e.SetVar(s.Name, m)
+	return m, nil
+}
+
+func BuiltInMacroExpand(e Environment, args []Form) (Form, error) {
+	if len(args) < 1 {
+		return nil, fmt.Errorf("macroexpand: Wrong number of arguments")
+	}
+
+	var mname Form
+	var err error
+	if mname, err = args[0].Eval(e); err != nil {
+		return nil, err
+	}
+
+	m, ok := mname.(Macro)
+	if !ok {
+		return nil, fmt.Errorf("macroexpand: First argument must evaluate to a macro")
+	}
+
+	return m.Expand(args[1:])
 }
 
 func BuiltInFn(e Environment, args []Form) (Form, error) {
@@ -131,15 +184,11 @@ func BuiltInFn(e Environment, args []Form) (Form, error) {
 	if fargs, ok := args[0].(*Vector); !ok {
 		return nil, fmt.Errorf("fn: first argument must be a vector")
 	} else {
-		symbols := make([]Symbol, len(fargs.Items))
-		for idx, fa := range fargs.Items {
-			if s, ok := fa.(Symbol); ok {
-				symbols[idx] = s
-			} else {
-				return nil, fmt.Errorf("fn: all arguments must evaluate to symbols")
-			}
+		if symbols, ok := castToSymbols(fargs.Items); !ok {
+			return nil, fmt.Errorf("fn: all arguments must evaluate to symbols")
+		} else {
+			fn.Args = symbols
 		}
-		fn.Args = symbols
 	}
 
 	if fbody, ok := args[1].(*List); !ok {
@@ -149,6 +198,18 @@ func BuiltInFn(e Environment, args []Form) (Form, error) {
 	}
 
 	return fn, nil
+}
+
+func castToSymbols(a []Form) ([]Symbol, bool) {
+	res := make([]Symbol, len(a))
+	for idx, f := range a {
+		if s, ok := f.(Symbol); ok {
+			res[idx] = s
+		} else {
+			return nil, false
+		}
+	}
+	return res, true
 }
 
 func BuiltInVars(e Environment, args []Form) (Form, error) {

@@ -73,3 +73,7 @@ func (f BuiltInFunction) Eval(e Environment) (Form, error) {
 func (f UserFunction) Eval(e Environment) (Form, error) {
 	return f, nil
 }
+
+func (m Macro) Eval(e Environment) (Form, error) {
+	return m, nil
+}
