@@ -109,18 +109,7 @@ func BuiltInDefn(e Environment, args []Form) (Form, error) {
 		return nil, fmt.Errorf("defn: First argument must be a symbol")
 	}
 
-	var fargs *Vector
-	var fbody *List
-
-	if fargs, ok = args[1].(*Vector); !ok {
-		return nil, fmt.Errorf("defn: first argument must be a vector")
-	}
-
-	if fbody, ok = args[2].(*List); !ok {
-		return nil, fmt.Errorf("defn: second argument must be a list")
-	}
-
-	if fn, err := BuiltInFn(e, []Form{fargs, fbody}); err != nil {
+	if fn, err := BuiltInFn(e, args[1:]); err != nil {
 		return nil, err
 	} else {
 		e.SetVar(s.Name, fn)
@@ -137,32 +126,29 @@ func BuiltInFn(e Environment, args []Form) (Form, error) {
 		return nil, fmt.Errorf("fn: Wrong number of arguments")
 	}
 
-	var fargs *Vector
-	var fbody *List
-	var ok bool
+	fn := UserFunction{}
 
-	if fargs, ok = args[0].(*Vector); !ok {
+	if fargs, ok := args[0].(*Vector); !ok {
 		return nil, fmt.Errorf("fn: first argument must be a vector")
-	}
-
-	if fbody, ok = args[1].(*List); !ok {
-		return nil, fmt.Errorf("fn: second argument must be a list")
-	}
-
-	symbols := make([]Symbol, len(fargs.Items))
-	for idx, fa := range fargs.Items {
-		if s, ok := fa.(Symbol); ok {
-			symbols[idx] = s
-		} else {
-			return nil, fmt.Errorf("fn: all arguments must evaluate to symbols")
+	} else {
+		symbols := make([]Symbol, len(fargs.Items))
+		for idx, fa := range fargs.Items {
+			if s, ok := fa.(Symbol); ok {
+				symbols[idx] = s
+			} else {
+				return nil, fmt.Errorf("fn: all arguments must evaluate to symbols")
+			}
 		}
+		fn.Args = symbols
 	}
 
-	f := UserFunction{
-		Args: symbols,
-		Body: fbody,
+	if fbody, ok := args[1].(*List); !ok {
+		return nil, fmt.Errorf("fn: second argument must be a list")
+	} else {
+		fn.Body = fbody
 	}
-	return f, nil
+
+	return fn, nil
 }
 
 func BuiltInVars(e Environment, args []Form) (Form, error) {
