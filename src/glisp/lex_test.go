@@ -64,29 +64,36 @@ func Test_lexer(t *testing.T) {
 
 	Convey("Numbers", t, func() {
 		l := lex("1234567890")
-		VerifyNextToken(l, tokenNumber, "1234567890")
-		VerifyNextToken(l, tokenEOF, "")
+		So(<-l.tokens, ShouldResemble, token{typ: tokenNumber, val: "1234567890"})
+		So(<-l.tokens, ShouldResemble, token{typ: tokenEOF})
+
+		l = lex("+1234567890")
+		So(<-l.tokens, ShouldResemble, token{typ: tokenNumber, val: "+1234567890"})
+		So(<-l.tokens, ShouldResemble, token{typ: tokenEOF})
 
 		l = lex("-1234567890")
-		VerifyNextToken(l, tokenNumber, "-1234567890")
-		VerifyNextToken(l, tokenEOF, "")
+		So(<-l.tokens, ShouldResemble, token{typ: tokenNumber, val: "-1234567890"})
+		So(<-l.tokens, ShouldResemble, token{typ: tokenEOF})
 
 		l = lex("-123456.7890")
-		VerifyNextToken(l, tokenNumber, "-123456.7890")
-		VerifyNextToken(l, tokenEOF, "")
+		So(<-l.tokens, ShouldResemble, token{typ: tokenNumber, val: "-123456.7890"})
+		So(<-l.tokens, ShouldResemble, token{typ: tokenEOF})
 
-		l = lex("-123456.78.90")
-		VerifyError(l)
+		l = lex("-123456.7890e10")
+		So(<-l.tokens, ShouldResemble, token{typ: tokenNumber, val: "-123456.7890e10"})
+		So(<-l.tokens, ShouldResemble, token{typ: tokenEOF})
 	})
 
 	Convey("Strings", t, func() {
 		l := lex("  \"a nice string, 11334.9 ;'[][\" ")
 		VerifyNextToken(l, tokenString, "a nice string, 11334.9 ;'[][")
+		VerifyNextToken(l, tokenEOF, "")
 
 		l = lex("(\"A string\")")
 		VerifyNextToken(l, tokenDelim, "(")
 		VerifyNextToken(l, tokenString, "A string")
 		VerifyNextToken(l, tokenDelim, ")")
+		VerifyNextToken(l, tokenEOF, "")
 	})
 
 	Convey("Misc", t, func() {

@@ -16,7 +16,9 @@ func lexProgram(l *lexer) stateFn {
 			l.ignore()
 		case strings.ContainsRune("()[]", r):
 			l.emit(tokenDelim)
-		case strings.ContainsRune("=+", r), isAlpha(r):
+		case strings.ContainsRune("+-", r):
+			return lexIdentifierOrNumber
+		case strings.ContainsRune("=", r), isAlpha(r):
 			return lexIdentifier
 		case r == '-', unicode.IsNumber(r):
 			return lexNumber
@@ -36,7 +38,7 @@ func lexProgram(l *lexer) stateFn {
 }
 
 func isWhitespace(r rune) bool {
-	return r == ' ' || r == '\n'
+	return r == ' ' || r == '\n' || r == eof
 }
 
 func isAlpha(r rune) bool {
@@ -47,10 +49,28 @@ func isAlphaNumeric(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsNumber(r)
 }
 
+func isMacro(r rune) bool {
+	return strings.ContainsRune("\";'@^`~()[]{}\\%#", r)
+}
+
+func isTerminatingMacro(r rune) bool {
+	return r != '#' && r != '\'' && r != '%' && isMacro(r)
+}
+
+func lexIdentifierOrNumber(l *lexer) stateFn {
+	r := l.next()
+	if unicode.IsNumber(r) {
+		return lexNumber
+	} else {
+		l.backup()
+		return lexIdentifier
+	}
+}
+
 func lexIdentifier(l *lexer) stateFn {
 	for {
 		r := l.next()
-		if !isAlphaNumeric(r) {
+		if isWhitespace(r) || isTerminatingMacro(r) {
 			l.backup()
 			l.emit(tokenIdentifier)
 			break
@@ -70,7 +90,7 @@ func lexNumber(l *lexer) stateFn {
 			}
 			foundComma = true
 
-		case !unicode.IsNumber(r):
+		case isWhitespace(r) || isMacro(r):
 			l.backup()
 			l.emit(tokenNumber)
 			return lexProgram
