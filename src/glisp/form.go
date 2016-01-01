@@ -21,6 +21,10 @@ type Symbol struct {
 	Name string
 }
 
+type Keyword struct {
+	Name string
+}
+
 type Literal struct {
 	Val string
 }
@@ -59,6 +63,10 @@ func (n Number) String() string {
 }
 
 func (s Symbol) String() string {
+	return fmt.Sprint(s.Name)
+}
+
+func (s Keyword) String() string {
 	return fmt.Sprint(s.Name)
 }
 

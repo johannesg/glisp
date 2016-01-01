@@ -50,11 +50,13 @@ func (a *reader) readForm(t token) (Form, error) {
 }
 
 func (a *reader) readIdentifier(t token) (Form, error) {
-	switch t.val {
-	case "true":
+	switch {
+	case t.val == "true":
 		return Boolean(true), nil
-	case "false":
+	case t.val == "false":
 		return Boolean(false), nil
+	case t.val[0] == ':':
+		return Keyword{Name: t.val}, nil
 	default:
 		return Symbol{Name: t.val}, nil
 	}

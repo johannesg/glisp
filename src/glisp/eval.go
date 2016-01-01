@@ -16,6 +16,10 @@ func (s Symbol) Eval(e Environment) (Form, error) {
 	return s, nil
 }
 
+func (k Keyword) Eval(e Environment) (Form, error) {
+	return k, nil
+}
+
 func (l Literal) Eval(e Environment) (Form, error) {
 	return l, nil
 }

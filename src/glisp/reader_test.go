@@ -89,6 +89,11 @@ func Test_reader(t *testing.T) {
 					Symbol{Name: "b"},
 				},
 			})
+
+			f, err = NewReader(":b").Read()
+
+			So(err, ShouldBeNil)
+			So(f, ShouldResemble, Keyword{Name: ":b"})
 		})
 	})
 }
