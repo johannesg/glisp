@@ -18,8 +18,6 @@ func lexProgram(l *lexer) stateFn {
 			l.emit(tokenDelim)
 		case strings.ContainsRune("+-", r):
 			return lexIdentifierOrNumber
-		case strings.ContainsRune("=", r), isAlpha(r):
-			return lexIdentifier
 		case r == '-', unicode.IsNumber(r):
 			return lexNumber
 		case r == '"':
@@ -29,8 +27,10 @@ func lexProgram(l *lexer) stateFn {
 			return lexProgram
 		case r == ';':
 			return lexComment
-		default:
+		case isMacro(r):
 			return l.errorf("Unknown token: %s", l.input[l.start:l.pos])
+		default:
+			return lexIdentifier
 		}
 	}
 	l.emit(tokenEOF)
@@ -58,11 +58,10 @@ func isTerminatingMacro(r rune) bool {
 }
 
 func lexIdentifierOrNumber(l *lexer) stateFn {
-	r := l.next()
+	r := l.peek()
 	if unicode.IsNumber(r) {
 		return lexNumber
 	} else {
-		l.backup()
 		return lexIdentifier
 	}
 }
