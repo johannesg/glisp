@@ -7,17 +7,13 @@ import (
 
 type LispFunction func(Environment, []Form) (Form, error)
 
-var builtIns = map[string]BuiltInFunction{
-	"+":   BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
-	"add": BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
-	// "=":    BuiltInFunction{Fn: BuiltInEquality,
-	"do":          BuiltInFunction{Fn: BuiltInDo, EvalArgs: true},
-	"def":         BuiltInFunction{Fn: BuiltInDef, EvalArgs: true},
-	"defn":        BuiltInFunction{Fn: BuiltInDefn},
-	"defmacro":    BuiltInFunction{Fn: BuiltInDefmacro},
-	"fn":          BuiltInFunction{Fn: BuiltInFn},
-	"vars":        BuiltInFunction{Fn: BuiltInVars},
-	"macroexpand": BuiltInFunction{Fn: BuiltInMacroExpand},
+type BuiltInFunction struct {
+	Fn       LispFunction
+	EvalArgs bool
+}
+
+func (f BuiltInFunction) Eval(e Environment) (Form, error) {
+	return f, nil
 }
 
 func (f BuiltInFunction) Invoke(e Environment, args []Form) (Form, error) {
@@ -35,35 +31,17 @@ func (f BuiltInFunction) Invoke(e Environment, args []Form) (Form, error) {
 	return f.Fn(e, args)
 }
 
-func (f UserFunction) Invoke(e Environment, args []Form) (Form, error) {
-	if len(args) > len(f.Args) {
-		return nil, fmt.Errorf("Too many arguments")
-	}
-
-	local := NewEnvironment(e)
-
-	for idx, a := range args {
-		if da, err := a.Eval(e); err == nil {
-			local.SetVar(f.Args[idx].Name, da)
-		} else {
-			return nil, err
-		}
-	}
-
-	return f.Body.Eval(local)
-}
-
-func (m Macro) Invoke(e Environment, args []Form) (Form, error) {
-	if len(args) > len(m.Args) {
-		return nil, fmt.Errorf("Too many arguments")
-	}
-
-	x, err := m.Expand(args)
-	if err != nil {
-		return nil, err
-	}
-
-	return x.Eval(e)
+var builtIns = map[string]BuiltInFunction{
+	"+":   BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
+	"add": BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
+	// "=":    BuiltInFunction{Fn: BuiltInEquality,
+	"do":          BuiltInFunction{Fn: BuiltInDo, EvalArgs: true},
+	"def":         BuiltInFunction{Fn: BuiltInDef, EvalArgs: true},
+	"defn":        BuiltInFunction{Fn: BuiltInDefn},
+	"defmacro":    BuiltInFunction{Fn: BuiltInDefmacro},
+	"fn":          BuiltInFunction{Fn: BuiltInFn},
+	"vars":        BuiltInFunction{Fn: BuiltInVars},
+	"macroexpand": BuiltInFunction{Fn: BuiltInMacroExpand},
 }
 
 func BuiltInAdd(e Environment, args []Form) (Form, error) {
