@@ -57,6 +57,10 @@ func (a *reader) readIdentifier(t token) (Form, error) {
 		return Boolean(false), nil
 	case t.val[0] == ':':
 		return Keyword{Name: t.val}, nil
+	case t.val[0] == '.':
+		return Interop{
+			Name: t.val[1:],
+		}, nil
 	default:
 		return Symbol{Name: t.val}, nil
 	}

@@ -62,3 +62,11 @@ func (l *List) Expand(argmap map[string]Form) (Form, error) {
 		Items: a,
 	}, err
 }
+
+func (l *List) First() Form {
+	return l.Items[0]
+}
+
+func (l *List) Rest() Form {
+	return &List{Items: l.Items[1:]}
+}
