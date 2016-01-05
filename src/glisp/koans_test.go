@@ -7,9 +7,8 @@ import (
 )
 
 func Test_Koan(t *testing.T) {
-	return
 
-	Convey("Koan 01", t, func() {
+	SkipConvey("Koan 01", t, func() {
 		assertTrue(
 			"We shall contemplate truth by testing reality, via equality",
 			"(= true true)")

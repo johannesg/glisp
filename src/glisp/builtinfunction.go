@@ -36,10 +36,11 @@ var builtIns = map[string]BuiltInFunction{
 	"add": BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
 	// "=":    BuiltInFunction{Fn: BuiltInEquality,
 	"do":          BuiltInFunction{Fn: BuiltInDo, EvalArgs: true},
-	"def":         BuiltInFunction{Fn: BuiltInDef, EvalArgs: true},
+	"def":         BuiltInFunction{Fn: BuiltInDef, EvalArgs: false},
 	"defn":        BuiltInFunction{Fn: BuiltInDefn},
 	"defmacro":    BuiltInFunction{Fn: BuiltInDefmacro},
 	"fn":          BuiltInFunction{Fn: BuiltInFn},
+	"var":         BuiltInFunction{Fn: BuiltInVar},
 	"vars":        BuiltInFunction{Fn: BuiltInVars},
 	"macroexpand": BuiltInFunction{Fn: BuiltInMacroExpand},
 }
@@ -198,6 +199,29 @@ func BuiltInVars(e Environment, args []Form) (Form, error) {
 	}
 
 	return nil, nil
+}
+
+func BuiltInVar(e Environment, args []Form) (Form, error) {
+	// items := []Form{}
+
+	if len(args) != 1 {
+		return nil, fmt.Errorf("Wrong number of arguments")
+	}
+
+	var name string
+	if s, ok := args[0].(Symbol); ok {
+		name = s.Name
+	}
+
+	if k, ok := args[0].(Keyword); ok {
+		name = k.Name
+	}
+
+	if ret, ok := e.Var(name); ok {
+		return ret, nil
+	}
+
+	return nil, fmt.Errorf("Var not defined")
 }
 
 // func BuiltInEquality(args []Form) (Form, error) {

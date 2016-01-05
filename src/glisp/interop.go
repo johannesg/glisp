@@ -14,6 +14,17 @@ func (i Interop) Eval(e Environment) (Form, error) {
 }
 
 func (i Interop) Invoke(e Environment, args []Form) (ret Form, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			var ok bool
+			if err, ok = r.(error); ok {
+				return
+			} else {
+				err = fmt.Errorf("%v", r)
+			}
+
+		}
+	}()
 	if len(args) < 1 {
 		return nil, fmt.Errorf("Wrong number of arguments")
 	}
@@ -28,13 +39,17 @@ func (i Interop) Invoke(e Environment, args []Form) (ret Form, err error) {
 	var m reflect.Method
 	var ok bool
 	if m, ok = t.MethodByName(i.Name); !ok {
-		return nil, fmt.Errorf("Method %v on type %v not found", i.Name, t.Name())
+		return nil, fmt.Errorf("Method %v on type %v not found", i.Name, t)
 	}
 
 	params := make([]reflect.Value, len(args))
 	params[0] = reflect.ValueOf(instance)
 	for idx, a := range args[1:] {
-		params[idx] = reflect.ValueOf(a)
+		ea, err := a.Eval(e)
+		if err != nil {
+			return nil, err
+		}
+		params[idx+1] = reflect.ValueOf(ea)
 	}
 
 	res := m.Func.Call(params)

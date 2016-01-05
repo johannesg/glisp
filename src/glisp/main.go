@@ -14,6 +14,10 @@ func main() {
 	defer rl.Close()
 
 	env := NewEnvironment(nil)
+	_, err = env.Load("core.clj")
+	if err != nil {
+		panic(err)
+	}
 
 	for {
 		line, err := rl.Readline()
