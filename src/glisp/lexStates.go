@@ -25,6 +25,9 @@ func lexProgram(l *lexer) stateFn {
 		case r == '\'':
 			l.emit(tokenQuote)
 			return lexProgram
+		// case r == '&':
+		// 	l.emit(tokenRest)
+		// 	return lexProgram
 		case r == ';':
 			return lexComment
 		case isMacro(r):

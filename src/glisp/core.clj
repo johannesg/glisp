@@ -7,3 +7,7 @@
 (defn cons [v seq] (.Cons (var ::core) v seq))
 
 (defn conj [seq v] (.Conj (var ::core) seq v))
+
+(defn add [a b] (.Add (var ::core) a b))
+
+(defn + [a b] (.Add (var ::core) a b))

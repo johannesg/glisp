@@ -30,12 +30,12 @@ func (l *List) Eval(e Environment) (Form, error) {
 		return nil, err
 	}
 
-	f, ok := fname.(Function)
+	f, ok := fname.(Callable)
 	if !ok {
 		return nil, fmt.Errorf("First argument must evaluate to a function")
 	}
 
-	return f.Invoke(e, l.Items[1:])
+	return f.Call(e, l.Items[1:])
 }
 
 func (l *List) Expand(argmap map[string]Form) (Form, error) {

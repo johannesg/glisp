@@ -47,11 +47,11 @@ func (q *QForm) String() string {
 }
 
 func (s Symbol) Eval(e Environment) (Form, error) {
-	v, ok := e.Var(s.Name)
-	if ok {
+	if v, ok := e.Var(s.Name); ok {
 		return v, nil
 	}
-	return s, nil
+
+	return nil, fmt.Errorf("Unable to resolve symbol %v", s.Name)
 }
 
 func (k Keyword) Eval(e Environment) (Form, error) {

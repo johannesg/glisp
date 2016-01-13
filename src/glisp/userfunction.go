@@ -13,7 +13,7 @@ func (f UserFunction) Eval(e Environment) (Form, error) {
 	return f, nil
 }
 
-func (f UserFunction) Invoke(e Environment, args []Form) (Form, error) {
+func (f UserFunction) Call(e Environment, args []Form) (Form, error) {
 	if len(args) > len(f.Args) {
 		return nil, fmt.Errorf("Too many arguments")
 	}
@@ -30,3 +30,14 @@ func (f UserFunction) Invoke(e Environment, args []Form) (Form, error) {
 
 	return f.Body.Eval(local)
 }
+
+// func (f UserFunction) MatchArgs(e Environment, args []Form) {
+// 	var rest []Form
+// 	insideRest := false
+// 	for idx, a := range f.Args {
+// 		if a.Name == "&" && rest != nil {
+// 			rest = args[idx:]
+// 		}
+// 	}
+
+// }

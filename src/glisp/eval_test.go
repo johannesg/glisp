@@ -9,6 +9,9 @@ import (
 func Test_eval(t *testing.T) {
 	Convey("Evaluation", t, func() {
 		e := NewEnvironment(nil)
+		_, err := e.Load("core.clj")
+		So(err, ShouldBeNil)
+
 		Convey("Basic", func() {
 			f, _ := NewReader("4").Read()
 			res, err := f.Eval(e)

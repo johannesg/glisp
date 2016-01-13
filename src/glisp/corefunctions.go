@@ -43,3 +43,7 @@ func (c *CoreFunctions) Conj(l *List, v Form) Form {
 		Items: items,
 	}
 }
+
+func (c *CoreFunctions) Add(a Number, b Number) Form {
+	return Number{Val: a.Val + b.Val}
+}

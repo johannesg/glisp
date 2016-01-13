@@ -25,7 +25,7 @@ func (m Macro) Expand(args []Form) (Form, error) {
 	return m.Body.Expand(argmap)
 }
 
-func (m Macro) Invoke(e Environment, args []Form) (Form, error) {
+func (m Macro) Call(e Environment, args []Form) (Form, error) {
 	if len(args) > len(m.Args) {
 		return nil, fmt.Errorf("Too many arguments")
 	}

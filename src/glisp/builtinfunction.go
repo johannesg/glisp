@@ -5,47 +5,30 @@ import (
 	"log"
 )
 
-type LispFunction func(Environment, []Form) (Form, error)
+type BuiltInFunction func(BuiltInFunctions, Environment, []Form) (Form, error)
 
-type BuiltInFunction struct {
-	Fn       LispFunction
-	EvalArgs bool
-}
+type BuiltInFunctions struct{}
 
 func (f BuiltInFunction) Eval(e Environment) (Form, error) {
 	return f, nil
 }
 
-func (f BuiltInFunction) Invoke(e Environment, args []Form) (Form, error) {
-	if f.EvalArgs {
-		eargs := make([]Form, len(args))
-		for idx, a := range args {
-			if ea, err := a.Eval(e); err == nil {
-				eargs[idx] = ea
-			} else {
-				return nil, err
-			}
-		}
-		return f.Fn(e, eargs)
-	}
-	return f.Fn(e, args)
+func (f BuiltInFunction) Call(e Environment, args []Form) (Form, error) {
+	return f(BuiltInFunctions{}, e, args)
 }
 
 var builtIns = map[string]BuiltInFunction{
-	"+":   BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
-	"add": BuiltInFunction{Fn: BuiltInAdd, EvalArgs: true},
-	// "=":    BuiltInFunction{Fn: BuiltInEquality,
-	"do":          BuiltInFunction{Fn: BuiltInDo, EvalArgs: true},
-	"def":         BuiltInFunction{Fn: BuiltInDef, EvalArgs: false},
-	"defn":        BuiltInFunction{Fn: BuiltInDefn},
-	"defmacro":    BuiltInFunction{Fn: BuiltInDefmacro},
-	"fn":          BuiltInFunction{Fn: BuiltInFn},
-	"var":         BuiltInFunction{Fn: BuiltInVar},
-	"vars":        BuiltInFunction{Fn: BuiltInVars},
-	"macroexpand": BuiltInFunction{Fn: BuiltInMacroExpand},
+	"do":          BuiltInFunctions.Do,
+	"def":         BuiltInFunctions.Def,
+	"defn":        BuiltInFunctions.Defn,
+	"defmacro":    BuiltInFunctions.Defmacro,
+	"fn":          BuiltInFunctions.Fn,
+	"var":         BuiltInFunctions.Var,
+	"vars":        BuiltInFunctions.Vars,
+	"macroexpand": BuiltInFunctions.MacroExpand,
 }
 
-func BuiltInAdd(e Environment, args []Form) (Form, error) {
+func (BuiltInFunctions) Add(e Environment, args []Form) (Form, error) {
 	result := 0
 	for _, a := range args {
 
@@ -59,17 +42,22 @@ func BuiltInAdd(e Environment, args []Form) (Form, error) {
 	return Number{Val: result}, nil
 }
 
-func BuiltInDo(e Environment, args []Form) (ret Form, err error) {
+func (BuiltInFunctions) Do(e Environment, args []Form) (ret Form, err error) {
 	for _, a := range args {
 		ret, err = a.Eval(e)
-		if ret != nil {
+		if err != nil {
+			return
+		}
+
+		ret, err = ret.Eval(e)
+		if err != nil {
 			return
 		}
 	}
 	return
 }
 
-func BuiltInDef(e Environment, args []Form) (Form, error) {
+func (BuiltInFunctions) Def(e Environment, args []Form) (Form, error) {
 	if len(args) < 1 {
 		return nil, fmt.Errorf("def: Wrong number of arguments")
 	}
@@ -92,7 +80,7 @@ func BuiltInDef(e Environment, args []Form) (Form, error) {
 	return s, nil
 }
 
-func BuiltInDefn(e Environment, args []Form) (Form, error) {
+func (f BuiltInFunctions) Defn(e Environment, args []Form) (Form, error) {
 	if len(args) < 3 {
 		return nil, fmt.Errorf("defn: Wrong number of arguments")
 	}
@@ -102,7 +90,7 @@ func BuiltInDefn(e Environment, args []Form) (Form, error) {
 		return nil, fmt.Errorf("defn: First argument must be a symbol")
 	}
 
-	if fn, err := BuiltInFn(e, args[1:]); err != nil {
+	if fn, err := f.Fn(e, args[1:]); err != nil {
 		return nil, err
 	} else {
 		e.SetVar(s.Name, fn)
@@ -110,7 +98,7 @@ func BuiltInDefn(e Environment, args []Form) (Form, error) {
 	}
 }
 
-func BuiltInDefmacro(e Environment, args []Form) (Form, error) {
+func (f BuiltInFunctions) Defmacro(e Environment, args []Form) (Form, error) {
 	if len(args) < 3 {
 		return nil, fmt.Errorf("defmacro: Wrong number of arguments")
 	}
@@ -120,7 +108,7 @@ func BuiltInDefmacro(e Environment, args []Form) (Form, error) {
 		return nil, fmt.Errorf("defmacro: First argument must be a symbol")
 	}
 
-	fn, err := BuiltInFn(e, args[1:])
+	fn, err := f.Fn(e, args[1:])
 
 	if err != nil {
 		return nil, err
@@ -134,7 +122,7 @@ func BuiltInDefmacro(e Environment, args []Form) (Form, error) {
 	return m, nil
 }
 
-func BuiltInMacroExpand(e Environment, args []Form) (Form, error) {
+func (BuiltInFunctions) MacroExpand(e Environment, args []Form) (Form, error) {
 	if len(args) < 1 {
 		return nil, fmt.Errorf("macroexpand: Wrong number of arguments")
 	}
@@ -153,7 +141,7 @@ func BuiltInMacroExpand(e Environment, args []Form) (Form, error) {
 	return m.Expand(args[1:])
 }
 
-func BuiltInFn(e Environment, args []Form) (Form, error) {
+func (BuiltInFunctions) Fn(e Environment, args []Form) (Form, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf("fn: Wrong number of arguments")
 	}
@@ -191,7 +179,7 @@ func castToSymbols(a []Form) ([]Symbol, bool) {
 	return res, true
 }
 
-func BuiltInVars(e Environment, args []Form) (Form, error) {
+func (BuiltInFunctions) Vars(e Environment, args []Form) (Form, error) {
 	// items := []Form{}
 
 	for k, v := range e.Vars() {
@@ -201,7 +189,7 @@ func BuiltInVars(e Environment, args []Form) (Form, error) {
 	return nil, nil
 }
 
-func BuiltInVar(e Environment, args []Form) (Form, error) {
+func (BuiltInFunctions) Var(e Environment, args []Form) (Form, error) {
 	// items := []Form{}
 
 	if len(args) != 1 {

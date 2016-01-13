@@ -13,7 +13,7 @@ func (i Interop) Eval(e Environment) (Form, error) {
 	return i, nil
 }
 
-func (i Interop) Invoke(e Environment, args []Form) (ret Form, err error) {
+func (i Interop) Call(e Environment, args []Form) (ret Form, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			var ok bool
