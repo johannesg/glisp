@@ -46,9 +46,11 @@ func Test_eval(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(res, ShouldResemble, UserFunction{
-					Args: []Symbol{
-						Symbol{Name: "x"},
-						Symbol{Name: "y"},
+					Args: &ArgVector{
+						Args: []ArgList{
+							&ArgItem{Name: "x"},
+							&ArgItem{Name: "y"},
+						},
 					},
 					Body: &List{
 						Items: []Form{
@@ -84,8 +86,8 @@ func Test_eval(t *testing.T) {
 				So(res, ShouldResemble, Number{Val: 8})
 
 				So(res, ShouldResemble, UserFunction{
-					Args: []Symbol{
-						Symbol{Name: "y"},
+					Args: &ArgVector{
+						Args: []ArgList{&ArgItem{Name: "y"}},
 					},
 					Body: &List{
 						Items: []Form{

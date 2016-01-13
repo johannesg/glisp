@@ -1,4 +1,4 @@
-(defn list [& items] (.First (var ::core) items))
+(defn list [& items] (.List (var ::core) items))
 
 (defn first [seq] (.First (var ::core) seq))
 

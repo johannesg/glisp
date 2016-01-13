@@ -10,8 +10,8 @@ func (c *CoreFunctions) Eval(e Environment) (Form, error) {
 	return c, nil
 }
 
-func (c *CoreFunctions) List(args []Form) Form {
-	return &List{Items: args}
+func (c *CoreFunctions) List(args *Vector) Form {
+	return &List{Items: args.Items}
 }
 
 func (c *CoreFunctions) First(l *List) Form {

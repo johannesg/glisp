@@ -151,10 +151,10 @@ func (BuiltInFunctions) Fn(e Environment, args []Form) (Form, error) {
 	if fargs, ok := args[0].(*Vector); !ok {
 		return nil, fmt.Errorf("fn: first argument must be a vector")
 	} else {
-		if symbols, ok := castToSymbols(fargs.Items); !ok {
-			return nil, fmt.Errorf("fn: all arguments must evaluate to symbols")
+		if argVector, err := NewArgList(fargs.Items); err != nil {
+			return nil, err
 		} else {
-			fn.Args = symbols
+			fn.Args = argVector
 		}
 	}
 

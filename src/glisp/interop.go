@@ -14,17 +14,17 @@ func (i Interop) Eval(e Environment) (Form, error) {
 }
 
 func (i Interop) Call(e Environment, args []Form) (ret Form, err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			var ok bool
-			if err, ok = r.(error); ok {
-				return
-			} else {
-				err = fmt.Errorf("%v", r)
-			}
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		var ok bool
+	// 		if err, ok = r.(error); ok {
+	// 			return
+	// 		} else {
+	// 			err = fmt.Errorf("%v", r)
+	// 		}
 
-		}
-	}()
+	// 	}
+	// }()
 	if len(args) < 1 {
 		return nil, fmt.Errorf("Wrong number of arguments")
 	}

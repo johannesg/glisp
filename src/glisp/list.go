@@ -38,15 +38,15 @@ func (l *List) Eval(e Environment) (Form, error) {
 	return f.Call(e, l.Items[1:])
 }
 
-func (l *List) Expand(argmap map[string]Form) (Form, error) {
+func (l *List) Expand(e Environment) (Form, error) {
 	a := make([]Form, len(l.Items))
 	var err error
 	for idx, i := range l.Items {
 		var res Form
 		if exp, ok := i.(Expandable); ok {
-			res, err = exp.Expand(argmap)
+			res, err = exp.Expand(e)
 		} else if sym, ok := i.(Symbol); ok {
-			if res, ok = argmap[sym.Name]; !ok {
+			if res, ok = e.Var(sym.Name); !ok {
 				res = i
 			}
 		} else {

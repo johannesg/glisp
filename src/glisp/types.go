@@ -9,5 +9,5 @@ type Callable interface {
 }
 
 type Expandable interface {
-	Expand(map[string]Form) (Form, error)
+	Expand(Environment) (Form, error)
 }

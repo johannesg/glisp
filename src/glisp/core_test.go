@@ -11,7 +11,7 @@ func Test_core(t *testing.T) {
 		_, err := e.Load("core.clj")
 		So(err, ShouldBeNil)
 
-		SkipConvey("list", func() {
+		Convey("list", func() {
 			res, err := e.Eval(`(list :a :b :c)`)
 			exp, _ := e.Eval(`'(:a :b :c)`)
 

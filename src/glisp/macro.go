@@ -7,7 +7,7 @@ import (
 // Implements: Expandable, Form
 
 type Macro struct {
-	Args []Symbol
+	Args *ArgVector
 	Body *List
 }
 
@@ -16,20 +16,15 @@ func (m Macro) Eval(e Environment) (Form, error) {
 }
 
 func (m Macro) Expand(args []Form) (Form, error) {
-	argmap := make(map[string]Form)
-
-	for idx, a := range args {
-		argmap[m.Args[idx].Name] = a
+	local := NewEnvironment(nil)
+	if !m.Args.Match(args, local) {
+		return nil, fmt.Errorf("Could not match arguments")
 	}
 
-	return m.Body.Expand(argmap)
+	return m.Body.Expand(local)
 }
 
 func (m Macro) Call(e Environment, args []Form) (Form, error) {
-	if len(args) > len(m.Args) {
-		return nil, fmt.Errorf("Too many arguments")
-	}
-
 	x, err := m.Expand(args)
 	if err != nil {
 		return nil, err
